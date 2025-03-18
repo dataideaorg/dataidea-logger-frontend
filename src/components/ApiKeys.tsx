@@ -23,10 +23,17 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
+  Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
+import BlockIcon from '@mui/icons-material/Block'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
 interface ApiKey {
   id: number
@@ -38,12 +45,15 @@ interface ApiKey {
 
 const ApiKeys = () => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
+  const [inactiveApiKeys, setInactiveApiKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
   const [newKeyName, setNewKeyName] = useState('')
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [keyToDelete, setKeyToDelete] = useState<ApiKey | null>(null)
+  const [openToggleDialog, setOpenToggleDialog] = useState(false)
+  const [keyToToggle, setKeyToToggle] = useState<ApiKey | null>(null)
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -60,7 +70,10 @@ const ApiKeys = () => {
     try {
       setLoading(true)
       const response = await axios.get(`${API_URL}/api-keys/`)
-      setApiKeys(response.data)
+      const activeKeys = response.data.filter((key: ApiKey) => key.is_active)
+      const inactiveKeys = response.data.filter((key: ApiKey) => !key.is_active)
+      setApiKeys(activeKeys)
+      setInactiveApiKeys(inactiveKeys)
       setError('')
     } catch (err) {
       console.error('Error fetching API keys:', err)
@@ -138,6 +151,34 @@ const ApiKeys = () => {
     setSnackbar({ ...snackbar, open: false })
   }
 
+  const handleToggleKeyStatus = async () => {
+    if (!keyToToggle) return
+
+    try {
+      const newStatus = !keyToToggle.is_active
+      const response = await axios.patch(`${API_URL}/api-keys/${keyToToggle.id}/`, {
+        is_active: newStatus
+      })
+      setApiKeys(apiKeys.map((key) =>
+        key.id === keyToToggle.id ? response.data : key
+      ))
+      setOpenToggleDialog(false)
+      setKeyToToggle(null)
+      setSnackbar({
+        open: true,
+        message: `API key ${newStatus ? 'activated' : 'deactivated'} successfully`,
+        severity: 'success',
+      })
+    } catch (err) {
+      console.error('Error toggling API key status:', err)
+      setSnackbar({
+        open: true,
+        message: `Failed to ${keyToToggle.is_active ? 'deactivate' : 'activate'} API key`,
+        severity: 'error',
+      })
+    }
+  }
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
@@ -148,8 +189,7 @@ const ApiKeys = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            // background color
-            sx={{backgroundColor: '#008374'}}
+            sx={{ backgroundColor: '#008374' }}
             onClick={() => setOpenDialog(true)}
           >
             Create New Key
@@ -214,15 +254,19 @@ const ApiKeys = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <IconButton
-                          color="error"
-                          onClick={() => {
-                            setKeyToDelete(key)
-                            setOpenDeleteDialog(true)
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <Tooltip title={key.is_active ? "Deactivate Key" : "Activate Key"}>
+                          <span>
+                            <IconButton
+                              color={key.is_active ? "error" : "success"}
+                              onClick={() => {
+                                setKeyToToggle(key);
+                                setOpenToggleDialog(true);
+                              }}
+                            >
+                              {key.is_active ? <BlockIcon /> : <CheckCircleIcon />}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -255,6 +299,31 @@ const ApiKeys = () => {
             <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
             <Button onClick={handleCreateKey} variant="contained">
               Create
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Toggle API Key Status Dialog */}
+        <Dialog open={openToggleDialog} onClose={() => setOpenToggleDialog(false)}>
+          <DialogTitle>
+            {keyToToggle?.is_active ? 'Deactivate' : 'Activate'} API Key
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {keyToToggle?.is_active ? 
+                `Are you sure you want to deactivate the API key "${keyToToggle?.name}"? The key will no longer be usable for new log entries, but all existing logs will be preserved.` :
+                `Are you sure you want to activate the API key "${keyToToggle?.name}"? The key will be usable again for new log entries.`
+              }
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenToggleDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleToggleKeyStatus} 
+              color={keyToToggle?.is_active ? "error" : "success"} 
+              variant="contained"
+            >
+              {keyToToggle?.is_active ? 'Deactivate' : 'Activate'}
             </Button>
           </DialogActions>
         </Dialog>
