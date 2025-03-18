@@ -236,8 +236,6 @@ const Dashboard = () => {
     "api_key": "your-api-key", 
     "user_id": "user123",
     "message": "User interaction logged",
-    "query": "What is the weather today?",
-    "response": "The weather is sunny with a high of 75°F.",
     "level": "info",
     "metadata": {"session_id": "abc123"}
   }'`}
