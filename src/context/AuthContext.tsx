@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const API_URL = 'http://localhost:8000/api'
+  const API_URL = 'http://loggerapi.dataidea.org/api'
   const AUTH_URL = `${API_URL}/auth`
 
   useEffect(() => {

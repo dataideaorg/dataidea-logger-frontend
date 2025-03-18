@@ -24,16 +24,11 @@ import {
   Alert,
   CircularProgress,
   Tooltip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
 } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
-import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
 import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
 interface ApiKey {
   id: number
@@ -45,7 +40,6 @@ interface ApiKey {
 
 const ApiKeys = () => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
-  const [inactiveApiKeys, setInactiveApiKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
@@ -60,7 +54,7 @@ const ApiKeys = () => {
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   })
 
-  const API_URL = 'http://localhost:8000/api'
+  const API_URL = 'http://loggerapi.dataidea.org/api'
 
   useEffect(() => {
     fetchApiKeys()
@@ -71,9 +65,7 @@ const ApiKeys = () => {
       setLoading(true)
       const response = await axios.get(`${API_URL}/api-keys/`)
       const activeKeys = response.data.filter((key: ApiKey) => key.is_active)
-      const inactiveKeys = response.data.filter((key: ApiKey) => !key.is_active)
       setApiKeys(activeKeys)
-      setInactiveApiKeys(inactiveKeys)
       setError('')
     } catch (err) {
       console.error('Error fetching API keys:', err)

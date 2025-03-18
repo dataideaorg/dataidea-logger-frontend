@@ -21,7 +21,6 @@ import {
   Pagination,
   IconButton,
   Collapse,
-  Tooltip,
   Tabs,
   Tab,
 } from '@mui/material'
@@ -90,7 +89,7 @@ const LogViewer = () => {
   const [tabValues, setTabValues] = useState<Record<number, number>>({})
   
   // API and pagination config
-  const API_URL = 'http://localhost:8000/api'
+  const API_URL = 'http://loggerapi.dataidea.org/api'
   const LOGS_PER_PAGE = 10
 
   useEffect(() => {
@@ -181,11 +180,11 @@ const LogViewer = () => {
     setPage(1) // Reset to first page when changing filters
   }
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value)
   }
 
-  const handleLogTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleLogTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveLogTab(newValue)
     setPage(1) // Reset to page 1 when switching log types
     setSearchTerm('') // Clear search when switching log types
@@ -297,7 +296,7 @@ const LogViewer = () => {
                       <Box sx={{ margin: 2 }}>
                         <Tabs 
                           value={tabValues[log.id] || 0} 
-                          onChange={(e, val) => handleTabChange(log.id, val)}
+                          onChange={(_e, val) => handleTabChange(log.id, val)}
                         >
                           <Tab label="Message" />
                           <Tab label="Metadata" />
@@ -387,7 +386,7 @@ const LogViewer = () => {
                       <Box sx={{ margin: 2 }}>
                         <Tabs 
                           value={tabValues[log.id] || 0} 
-                          onChange={(e, val) => handleTabChange(log.id, val)}
+                          onChange={(_e, val) => handleTabChange(log.id, val)}
                         >
                           <Tab label="Query" />
                           <Tab label="Response" />
