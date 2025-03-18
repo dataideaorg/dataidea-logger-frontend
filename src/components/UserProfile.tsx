@@ -41,7 +41,7 @@ const UserProfile = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const API_URL = 'http://loggerapi.dataidea.org/api';
+  const API_URL = 'https://loggerapi.dataidea.org/api';
   const AUTH_URL = `${API_URL}/auth`;
 
   useEffect(() => {

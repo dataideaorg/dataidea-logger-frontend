@@ -103,7 +103,7 @@ const Dashboard = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('access_token')
-      const response = await axios.get('http://localhost:8000/api/user/stats/', {
+      const response = await axios.get('https://loggerapi.dataidea.org/api/user/stats/', {
         headers: {
           Authorization: `Bearer ${token}`
         }
