@@ -29,7 +29,7 @@ const Navbar = () => {
           <Toolbar disableGutters>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               <RouterLink to="/" style={{ color: 'white', textDecoration: 'none' }}>
-                DataIdea Logger
+                Logger
               </RouterLink>
             </Typography>
             

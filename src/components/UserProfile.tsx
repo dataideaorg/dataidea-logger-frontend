@@ -13,7 +13,10 @@ import {
   Divider,
   Card,
   CardContent,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import AuthContext from '../context/AuthContext'
 
 interface UsageStats {
@@ -53,21 +56,9 @@ const UserProfile = () => {
   const fetchUsageStats = async () => {
     try {
       setStatsLoading(true)
-      // In a real application, this would be an API call to get usage statistics
-      // For now, we'll simulate it with a timeout
-      setTimeout(() => {
-        setUsageStats({
-          total_logs: 157,
-          logs_by_level: {
-            info: 98,
-            warning: 32,
-            error: 15,
-            debug: 12,
-          },
-          api_keys_count: 3,
-        })
-        setStatsLoading(false)
-      }, 1000)
+      const response = await axios.get(`${API_URL}/user/stats/`)
+      setUsageStats(response.data)
+      setStatsLoading(false)
     } catch (err) {
       console.error('Error fetching usage stats:', err)
       setStatsLoading(false)
@@ -81,9 +72,10 @@ const UserProfile = () => {
     setUpdateSuccess(false)
 
     try {
-      // In a real application, this would be an API call to update the user profile
-      // For now, we'll simulate it with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await axios.put(`${API_URL}/user/profile/`, {
+        username,
+        email
+      })
       
       setUpdateSuccess(true)
     } catch (err: any) {
@@ -107,9 +99,10 @@ const UserProfile = () => {
     setUpdateSuccess(false)
 
     try {
-      // In a real application, this would be an API call to update the password
-      // For now, we'll simulate it with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await axios.put(`${API_URL}/user/profile/`, {
+        current_password: currentPassword,
+        new_password: newPassword
+      })
       
       setCurrentPassword('')
       setNewPassword('')
@@ -243,9 +236,20 @@ const UserProfile = () => {
           
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 3 }}>
-              <Typography variant="h5" component="h2" gutterBottom>
-                Usage Statistics
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h5" component="h2">
+                  Usage Statistics
+                </Typography>
+                <Tooltip title="Refresh statistics">
+                  <IconButton 
+                    onClick={fetchUsageStats} 
+                    disabled={statsLoading}
+                    size="small"
+                  >
+                    <RefreshIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               
               {statsLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
