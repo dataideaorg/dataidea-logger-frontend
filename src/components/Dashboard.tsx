@@ -17,8 +17,8 @@ const Dashboard = () => {
   const { user } = useContext(AuthContext)
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+    <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: { xs: 2, sm: 3, md: 4 } }}>
+      <Box>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Welcome, {user?.username}!
@@ -29,7 +29,7 @@ const Dashboard = () => {
         </Box>
 
         <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} lg={4}>
             <Paper
               sx={{
                 p: 3,
@@ -49,14 +49,14 @@ const Dashboard = () => {
                 variant="contained"
                 component={RouterLink}
                 to="/api-keys"
-                sx={{ alignSelf: 'flex-start' }}
+                sx={{ alignSelf: 'flex-start', backgroundColor: '#008374' }}
               >
                 Manage API Keys
               </Button>
             </Paper>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} lg={4}>
             <Paper
               sx={{
                 p: 3,
@@ -76,9 +76,37 @@ const Dashboard = () => {
                 variant="contained"
                 component={RouterLink}
                 to="/logs"
-                sx={{ alignSelf: 'flex-start' }}
+                sx={{ alignSelf: 'flex-start', backgroundColor: '#008374' }}
               >
                 View Logs
+              </Button>
+            </Paper>
+          </Grid>
+          
+          <Grid item xs={12} md={6} lg={4}>
+            <Paper
+              sx={{
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                height: 240,
+              }}
+            >
+              <Typography variant="h5" component="h2" gutterBottom>
+                Documentation
+              </Typography>
+              <Typography variant="body1" paragraph>
+                Read our developer guides and API documentation.
+              </Typography>
+              <Box sx={{ flexGrow: 1 }} />
+              <Button
+                variant="contained"
+                component="a"
+                href="https://github.com/yourorg/dataidea-logger"
+                target="_blank"
+                sx={{ alignSelf: 'flex-start', backgroundColor: '#008374' }}
+              >
+                View Documentation
               </Button>
             </Paper>
           </Grid>
@@ -98,7 +126,7 @@ const Dashboard = () => {
               </Typography>
             </CardContent>
             <CardActions>
-              <Button size="small" component={RouterLink} to="/api-keys">
+                <Button size="small" component={RouterLink} to="/api-keys" sx={{ backgroundColor: '#008374', color: 'white', '&:hover': { backgroundColor: 'white', color: '#008374' } }}>
                 Create API Key
               </Button>
             </CardActions>
@@ -148,7 +176,7 @@ const Dashboard = () => {
               </Typography>
             </CardContent>
             <CardActions>
-              <Button size="small" component={RouterLink} to="/logs">
+                  <Button size="small" component={RouterLink} to="/logs" sx={{ backgroundColor: '#008374', color: 'white', '&:hover': { backgroundColor: 'white', color: '#008374' } }}>
                 View Logs
               </Button>
             </CardActions>

@@ -148,6 +148,8 @@ const ApiKeys = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            // background color
+            sx={{backgroundColor: '#008374'}}
             onClick={() => setOpenDialog(true)}
           >
             Create New Key
