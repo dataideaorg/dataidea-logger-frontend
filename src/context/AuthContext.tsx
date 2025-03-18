@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   const API_URL = 'http://localhost:8000/api'
+  const AUTH_URL = `${API_URL}/auth`
 
   useEffect(() => {
     const loadUser = async () => {
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         
         // Get user data
-        const response = await axios.get(`${API_URL}/user/`)
+        const response = await axios.get(`${AUTH_URL}/user/`)
         setUser(response.data)
         setIsAuthenticated(true)
       } catch (error) {
@@ -76,11 +77,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     loadUser()
-  }, [])
+  }, [AUTH_URL])
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/token/`, {
+      const response = await axios.post(`${AUTH_URL}/token/`, {
         username,
         password,
       })
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`
       
-      const userResponse = await axios.get(`${API_URL}/user/`)
+      const userResponse = await axios.get(`${AUTH_URL}/user/`)
       setUser(userResponse.data)
       setIsAuthenticated(true)
     } catch (error) {
@@ -103,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (username: string, email: string, password: string, passwordConfirm: string) => {
     try {
-      await axios.post(`${API_URL}/register/`, {
+      await axios.post(`${AUTH_URL}/register/`, {
         username,
         email,
         password,
