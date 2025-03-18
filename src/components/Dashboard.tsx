@@ -230,7 +230,7 @@ const Dashboard = () => {
                   fontSize: '0.875rem',
                 }}
               >
-                {`curl -X POST http://localhost:8000/api/log/ \\
+                {`curl -X POST http://localhost:8000/api/event-log/ \\
   -H "Content-Type: application/json" \\
   -d '{
     "api_key": "your-api-key", 
