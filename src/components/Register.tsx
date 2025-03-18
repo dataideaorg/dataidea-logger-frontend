@@ -131,7 +131,7 @@ const Register = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                sx={{ mt: 3, mb: 2, backgroundColor: '#008374' }}
                 disabled={loading}
               >
                 {loading ? 'Registering...' : 'Register'}
@@ -139,7 +139,7 @@ const Register = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="body2">
                   Already have an account?{' '}
-                  <Link component={RouterLink} to="/login">
+                  <Link component={RouterLink} className='text-[#008374]'  to="/login">
                     Log in here
                   </Link>
                 </Typography>

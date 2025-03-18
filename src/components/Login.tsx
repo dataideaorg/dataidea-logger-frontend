@@ -90,7 +90,7 @@ const Login = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                sx={{ mt: 3, mb: 2, backgroundColor: '#008374' }}
                 disabled={loading}
               >
                 {loading ? 'Logging in...' : 'Log In'}
@@ -98,7 +98,7 @@ const Login = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="body2">
                   Don't have an account?{' '}
-                  <Link component={RouterLink} to="/register">
+                  <Link component={RouterLink} className='text-[#008374]' to="/register">
                     Register here
                   </Link>
                 </Typography>
