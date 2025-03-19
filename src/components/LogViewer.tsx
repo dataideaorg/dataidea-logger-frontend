@@ -17,8 +17,6 @@ import {
   MenuItem,
   Grid,
   Button,
-  Alert,
-  CircularProgress,
   Pagination,
   IconButton,
   Collapse,
@@ -59,19 +57,6 @@ interface LlmLogMessage extends BaseLogMessage {
 interface TabPanelProps {
   children?: React.ReactNode
   index: number
-  value: number
-}
-
-// For grouping logs by month
-interface MonthlyLogCounts {
-  month: string
-  eventCount: number
-  llmCount: number
-}
-
-// For grouping LLM logs by source
-interface SourceCount {
-  name: string
   value: number
 }
 
@@ -124,6 +109,7 @@ const LogViewer = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true)
+      console.log(loading)
       setError('')
       
       if (activeLogTab === 0) {
@@ -136,8 +122,10 @@ const LogViewer = () => {
         setAllLlmLogs(response.data)
       }
     } catch (err) {
+
       console.error('Error fetching logs:', err)
       setError('Failed to load logs. Please try again.')
+      console.log(error)
     } finally {
       setLoading(false)
     }
