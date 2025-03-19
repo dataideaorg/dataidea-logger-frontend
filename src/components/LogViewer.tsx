@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { Link as RouterLink } from 'react-router-dom'
 import {
   Container,
   Typography,
@@ -23,11 +24,15 @@ import {
   Collapse,
   Tabs,
   Tab,
+  Stack,
+  Tooltip,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import DownloadIcon from '@mui/icons-material/Download'
+import BarChartIcon from '@mui/icons-material/BarChart'
 import { API_URL } from '../api/endpoints'
 
 // Common interface for shared properties
@@ -57,6 +62,19 @@ interface TabPanelProps {
   value: number
 }
 
+// For grouping logs by month
+interface MonthlyLogCounts {
+  month: string
+  eventCount: number
+  llmCount: number
+}
+
+// For grouping LLM logs by source
+interface SourceCount {
+  name: string
+  value: number
+}
+
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props
 
@@ -77,6 +95,8 @@ const LogViewer = () => {
   // Log state for both types
   const [eventLogs, setEventLogs] = useState<EventLogMessage[]>([])
   const [llmLogs, setLlmLogs] = useState<LlmLogMessage[]>([])
+  const [allEventLogs, setAllEventLogs] = useState<EventLogMessage[]>([])
+  const [allLlmLogs, setAllLlmLogs] = useState<LlmLogMessage[]>([])
   
   // UI state
   const [activeLogTab, setActiveLogTab] = useState(0) // 0 for Event Logs, 1 for LLM Logs
@@ -94,7 +114,12 @@ const LogViewer = () => {
 
   useEffect(() => {
     fetchLogs()
-  }, [page, levelFilter, activeLogTab])
+  }, [activeLogTab])
+
+  // Apply filters and update pagination when search or level filter changes
+  useEffect(() => {
+    applyFiltersAndPaginate()
+  }, [page, levelFilter, searchTerm, allEventLogs, allLlmLogs])
 
   const fetchLogs = async () => {
     try {
@@ -102,61 +127,13 @@ const LogViewer = () => {
       setError('')
       
       if (activeLogTab === 0) {
-        // Fetch event logs
-        const response = await axios.get(`${API_URL}/event-logs/`, {
-          params: {
-            page,
-            level: levelFilter !== 'all' ? levelFilter : undefined,
-            search: searchTerm || undefined,
-          },
-        })
-        
-        // In a real app, the backend would return paginated results
-        // For now, we'll simulate pagination on the frontend
-        const allLogs = response.data
-        const filteredLogs = searchTerm
-          ? allLogs.filter((log: EventLogMessage) => 
-              log.message.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-          : allLogs
-        
-        const totalItems = filteredLogs.length
-        setTotalPages(Math.ceil(totalItems / LOGS_PER_PAGE))
-        
-        const paginatedLogs = filteredLogs.slice(
-          (page - 1) * LOGS_PER_PAGE,
-          page * LOGS_PER_PAGE
-        )
-        
-        setEventLogs(paginatedLogs)
+        // Fetch all event logs
+        const response = await axios.get(`${API_URL}/event-logs/`)
+        setAllEventLogs(response.data)
       } else {
-        // Fetch LLM logs
-        const response = await axios.get(`${API_URL}/llm-logs/`, {
-          params: {
-            page,
-            search: searchTerm || undefined,
-          },
-        })
-        
-        // Simulate pagination for LLM logs too
-        const allLogs = response.data
-        const filteredLogs = searchTerm
-          ? allLogs.filter((log: LlmLogMessage) => 
-              (log.query && log.query.toLowerCase().includes(searchTerm.toLowerCase())) ||
-              (log.response && log.response.toLowerCase().includes(searchTerm.toLowerCase())) ||
-              (log.source && log.source.toLowerCase().includes(searchTerm.toLowerCase()))
-            )
-          : allLogs
-        
-        const totalItems = filteredLogs.length
-        setTotalPages(Math.ceil(totalItems / LOGS_PER_PAGE))
-        
-        const paginatedLogs = filteredLogs.slice(
-          (page - 1) * LOGS_PER_PAGE,
-          page * LOGS_PER_PAGE
-        )
-        
-        setLlmLogs(paginatedLogs)
+        // Fetch all LLM logs
+        const response = await axios.get(`${API_URL}/llm-logs/`)
+        setAllLlmLogs(response.data)
       }
     } catch (err) {
       console.error('Error fetching logs:', err)
@@ -166,9 +143,65 @@ const LogViewer = () => {
     }
   }
 
+  const applyFiltersAndPaginate = () => {
+    if (activeLogTab === 0 && allEventLogs.length > 0) {
+      // Filter event logs by level and search term
+      let filteredLogs = [...allEventLogs]
+      
+      // Apply level filter if not 'all'
+      if (levelFilter !== 'all') {
+        filteredLogs = filteredLogs.filter(log => log.level === levelFilter)
+      }
+      
+      // Apply search filter if there's a search term
+      if (searchTerm) {
+        filteredLogs = filteredLogs.filter(log => 
+          log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          log.user_id.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      }
+      
+      // Update pagination
+      const totalItems = filteredLogs.length
+      setTotalPages(Math.ceil(totalItems / LOGS_PER_PAGE))
+      
+      // Get current page's logs
+      const paginatedLogs = filteredLogs.slice(
+        (page - 1) * LOGS_PER_PAGE,
+        page * LOGS_PER_PAGE
+      )
+      
+      setEventLogs(paginatedLogs)
+      
+    } else if (activeLogTab === 1 && allLlmLogs.length > 0) {
+      // Filter LLM logs by search term
+      let filteredLogs = [...allLlmLogs]
+      
+      if (searchTerm) {
+        filteredLogs = filteredLogs.filter(log => 
+          (log.query && log.query.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (log.response && log.response.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (log.source && log.source.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          log.user_id.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      }
+      
+      // Update pagination
+      const totalItems = filteredLogs.length
+      setTotalPages(Math.ceil(totalItems / LOGS_PER_PAGE))
+      
+      // Get current page's logs
+      const paginatedLogs = filteredLogs.slice(
+        (page - 1) * LOGS_PER_PAGE,
+        page * LOGS_PER_PAGE
+      )
+      
+      setLlmLogs(paginatedLogs)
+    }
+  }
+
   const handleSearch = () => {
     setPage(1) // Reset to first page when searching
-    fetchLogs()
   }
 
   const handleRefresh = () => {
@@ -241,218 +274,384 @@ const LogViewer = () => {
     return JSON.stringify(metadata, null, 2)
   }
 
+  const handleDownloadEventLogs = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('access_token');
+      
+      // Make an authenticated request to the download endpoint
+      const response = await axios.get(`${API_URL}/event-logs/download/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        responseType: 'blob' // Important for file downloads
+      });
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from Content-Disposition header or use a default
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `event_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading event logs:', error);
+      setError('Failed to download event logs. Please try again.');
+    }
+  }
+
+  const handleDownloadLlmLogs = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('access_token');
+      
+      // Make an authenticated request to the download endpoint
+      const response = await axios.get(`${API_URL}/llm-logs/download/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        responseType: 'blob' // Important for file downloads
+      });
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from Content-Disposition header or use a default
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `llm_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading LLM logs:', error);
+      setError('Failed to download LLM logs. Please try again.');
+    }
+  }
+
+  const handleDownloadAllLogs = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('access_token');
+      
+      // Make an authenticated request to the download endpoint
+      const response = await axios.get(`${API_URL}/download/all-logs/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        responseType: 'blob' // Important for file downloads
+      });
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from Content-Disposition header or use a default
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `all_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading all logs:', error);
+      setError('Failed to download logs. Please try again.');
+    }
+  }
+
   // Render event logs table
   const renderEventLogsTable = () => (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell width="15%">Timestamp</TableCell>
-            <TableCell width="10%">Level</TableCell>
-            <TableCell width="15%">User ID</TableCell>
-            <TableCell width="45%">Message</TableCell>
-            <TableCell width="15%">Details</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {eventLogs.length === 0 ? (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">Event Logs</Typography>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Download event logs as CSV">
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadEventLogs}
+              size="small"
+            >
+              Download Event Logs
+            </Button>
+          </Tooltip>
+        </Stack>
+      </Box>
+      
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={5} align="center">
-                No logs found
-              </TableCell>
+              <TableCell width="15%">Timestamp</TableCell>
+              <TableCell width="10%">Level</TableCell>
+              <TableCell width="15%">User ID</TableCell>
+              <TableCell width="45%">Message</TableCell>
+              <TableCell width="15%">Details</TableCell>
             </TableRow>
-          ) : (
-            eventLogs.map((log) => (
-              <React.Fragment key={log.id}>
-                <TableRow>
-                  <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={log.level} 
-                      color={getLevelChipColor(log.level) as any} 
-                      size="small" 
-                    />
-                  </TableCell>
-                  <TableCell>{log.user_id}</TableCell>
-                  <TableCell>
-                    {log.message.length > 100 
-                      ? `${log.message.substring(0, 100)}...` 
-                      : log.message}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => toggleRowExpand(log.id)}
-                      aria-expanded={expandedRows[log.id]}
-                      aria-label="show more"
-                    >
-                      {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
-                    <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
-                      <Box sx={{ margin: 2 }}>
-                        <Tabs 
-                          value={tabValues[log.id] || 0} 
-                          onChange={(_e, val) => handleTabChange(log.id, val)}
-                        >
-                          <Tab label="Message" />
-                          <Tab label="Metadata" />
-                        </Tabs>
-                        
-                        <TabPanel value={tabValues[log.id] || 0} index={0}>
-                          <Typography variant="subtitle2" gutterBottom component="div">
-                            Full Message:
-                          </Typography>
-                          <Paper
-                            elevation={0}
-                            sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+          </TableHead>
+          <TableBody>
+            {eventLogs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No logs found
+                </TableCell>
+              </TableRow>
+            ) : (
+              eventLogs.map((log) => (
+                <React.Fragment key={log.id}>
+                  <TableRow>
+                    <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={log.level} 
+                        color={getLevelChipColor(log.level) as any} 
+                        size="small" 
+                      />
+                    </TableCell>
+                    <TableCell>{log.user_id}</TableCell>
+                    <TableCell>
+                      {log.message.length > 100 
+                        ? `${log.message.substring(0, 100)}...` 
+                        : log.message}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleRowExpand(log.id)}
+                        aria-expanded={expandedRows[log.id]}
+                        aria-label="show more"
+                      >
+                        {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
+                      <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 2 }}>
+                          <Tabs 
+                            value={tabValues[log.id] || 0} 
+                            onChange={(_e, val) => handleTabChange(log.id, val)}
                           >
-                            {log.message}
-                          </Paper>
-                        </TabPanel>
-                        
-                        <TabPanel value={tabValues[log.id] || 0} index={1}>
-                          <Typography variant="subtitle2" gutterBottom component="div">
-                            Metadata:
-                          </Typography>
-                          <Paper
-                            elevation={0}
-                            sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
-                          >
-                            <pre>{formatMetadata(log.metadata)}</pre>
-                          </Paper>
-                        </TabPanel>
-                      </Box>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </React.Fragment>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
+                            <Tab label="Message" />
+                            <Tab label="Metadata" />
+                          </Tabs>
+                          
+                          <TabPanel value={tabValues[log.id] || 0} index={0}>
+                            <Typography variant="subtitle2" gutterBottom component="div">
+                              Full Message:
+                            </Typography>
+                            <Paper
+                              elevation={0}
+                              sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                            >
+                              {log.message}
+                            </Paper>
+                          </TabPanel>
+                          
+                          <TabPanel value={tabValues[log.id] || 0} index={1}>
+                            <Typography variant="subtitle2" gutterBottom component="div">
+                              Metadata:
+                            </Typography>
+                            <Paper
+                              elevation={0}
+                              sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                            >
+                              <pre>{formatMetadata(log.metadata)}</pre>
+                            </Paper>
+                          </TabPanel>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   )
 
   // Render LLM logs table
   const renderLlmLogsTable = () => (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell width="15%">Timestamp</TableCell>
-            <TableCell width="15%">User ID</TableCell>
-            <TableCell width="15%">Source</TableCell>
-            <TableCell width="40%">Query/Response</TableCell>
-            <TableCell width="15%">Details</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {llmLogs.length === 0 ? (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">LLM Logs</Typography>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Download LLM logs as CSV">
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadLlmLogs}
+              size="small"
+            >
+              Download LLM Logs
+            </Button>
+          </Tooltip>
+        </Stack>
+      </Box>
+      
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={5} align="center">
-                No LLM logs found
-              </TableCell>
+              <TableCell width="15%">Timestamp</TableCell>
+              <TableCell width="15%">User ID</TableCell>
+              <TableCell width="15%">Source</TableCell>
+              <TableCell width="40%">Query/Response</TableCell>
+              <TableCell width="15%">Details</TableCell>
             </TableRow>
-          ) : (
-            llmLogs.map((log) => (
-              <React.Fragment key={log.id}>
-                <TableRow>
-                  <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
-                  <TableCell>{log.user_id}</TableCell>
-                  <TableCell>{log.source}</TableCell>
-                  <TableCell>
-                    {log.query && log.query.length > 80 
-                      ? `${log.query.substring(0, 80)}...` 
-                      : log.query || 'No query'}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => toggleRowExpand(log.id)}
-                      aria-expanded={expandedRows[log.id]}
-                      aria-label="show more"
-                    >
-                      {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
-                    <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
-                      <Box sx={{ margin: 2 }}>
-                        <Tabs 
-                          value={tabValues[log.id] || 0} 
-                          onChange={(_e, val) => handleTabChange(log.id, val)}
-                        >
-                          <Tab label="Query" />
-                          <Tab label="Response" />
-                          <Tab label="Metadata" />
-                        </Tabs>
-                        
-                        <TabPanel value={tabValues[log.id] || 0} index={0}>
-                          <Typography variant="subtitle2" gutterBottom component="div">
-                            Full Query:
-                          </Typography>
-                          <Paper
-                            elevation={0}
-                            sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+          </TableHead>
+          <TableBody>
+            {llmLogs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No LLM logs found
+                </TableCell>
+              </TableRow>
+            ) : (
+              llmLogs.map((log) => (
+                <React.Fragment key={log.id}>
+                  <TableRow>
+                    <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
+                    <TableCell>{log.user_id}</TableCell>
+                    <TableCell>{log.source}</TableCell>
+                    <TableCell>
+                      {log.query && log.query.length > 80 
+                        ? `${log.query.substring(0, 80)}...` 
+                        : log.query || 'No query'}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleRowExpand(log.id)}
+                        aria-expanded={expandedRows[log.id]}
+                        aria-label="show more"
+                      >
+                        {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
+                      <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 2 }}>
+                          <Tabs 
+                            value={tabValues[log.id] || 0} 
+                            onChange={(_e, val) => handleTabChange(log.id, val)}
                           >
-                            {log.query || 'No query provided'}
-                          </Paper>
-                        </TabPanel>
-                        
-                        <TabPanel value={tabValues[log.id] || 0} index={1}>
-                          <Typography variant="subtitle2" gutterBottom component="div">
-                            Full Response:
-                          </Typography>
-                          <Paper
-                            elevation={0}
-                            sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
-                          >
-                            {log.response || 'No response provided'}
-                          </Paper>
-                        </TabPanel>
-                        
-                        <TabPanel value={tabValues[log.id] || 0} index={2}>
-                          <Typography variant="subtitle2" gutterBottom component="div">
-                            Metadata:
-                          </Typography>
-                          <Paper
-                            elevation={0}
-                            sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
-                          >
-                            <pre>{formatMetadata(log.metadata)}</pre>
-                          </Paper>
-                        </TabPanel>
-                      </Box>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </React.Fragment>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
+                            <Tab label="Query" />
+                            <Tab label="Response" />
+                            <Tab label="Metadata" />
+                          </Tabs>
+                          
+                          <TabPanel value={tabValues[log.id] || 0} index={0}>
+                            <Typography variant="subtitle2" gutterBottom component="div">
+                              Full Query:
+                            </Typography>
+                            <Paper
+                              elevation={0}
+                              sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                            >
+                              {log.query || 'No query provided'}
+                            </Paper>
+                          </TabPanel>
+                          
+                          <TabPanel value={tabValues[log.id] || 0} index={1}>
+                            <Typography variant="subtitle2" gutterBottom component="div">
+                              Full Response:
+                            </Typography>
+                            <Paper
+                              elevation={0}
+                              sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                            >
+                              {log.response || 'No response provided'}
+                            </Paper>
+                          </TabPanel>
+                          
+                          <TabPanel value={tabValues[log.id] || 0} index={2}>
+                            <Typography variant="subtitle2" gutterBottom component="div">
+                              Metadata:
+                            </Typography>
+                            <Paper
+                              elevation={0}
+                              sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                            >
+                              <pre>{formatMetadata(log.metadata)}</pre>
+                            </Paper>
+                          </TabPanel>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   )
 
   return (
-    <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: { xs: 2, sm: 3, md: 4 } }}>
-      <Box>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Logs
-        </Typography>
-
-        {/* Log Type Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={activeLogTab} onChange={handleLogTabChange}>
-            <Tab label="Event Logs" />
-            <Tab label="LLM Logs" />
-          </Tabs>
+    <Container maxWidth="xl">
+      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5" component="h1">Log Explorer</Typography>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<BarChartIcon />}
+              component={RouterLink}
+              to="/analytics"
+            >
+              View Analytics
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadAllLogs}
+            >
+              Download All
+            </Button>
+          </Stack>
         </Box>
 
         <Paper sx={{ p: 3, mb: 4 }}>
@@ -506,35 +705,33 @@ const LogViewer = () => {
           </Grid>
         </Paper>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs value={activeLogTab} onChange={handleLogTabChange}>
+            <Tab label="Event Logs" />
+            <Tab label="LLM Logs" />
+          </Tabs>
+        </Box>
 
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-            <CircularProgress />
+        <TabPanel value={activeLogTab} index={0}>
+          {renderEventLogsTable()}
+        </TabPanel>
+
+        <TabPanel value={activeLogTab} index={1}>
+          {renderLlmLogsTable()}
+        </TabPanel>
+
+        {(eventLogs.length > 0 || llmLogs.length > 0) && (
+          <Box display="flex" justifyContent="center" mt={3}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+            />
           </Box>
-        ) : (
-          <>
-            {/* Render the appropriate table based on active tab */}
-            {activeLogTab === 0 ? renderEventLogsTable() : renderLlmLogsTable()}
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <Pagination
-                  count={totalPages}
-                  page={page}
-                  onChange={handlePageChange}
-                  color="primary"
-                />
-              </Box>
-            )}
-          </>
         )}
-      </Box>
+      </Paper>
     </Container>
   )
 }

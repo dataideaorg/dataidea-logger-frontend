@@ -403,7 +403,7 @@ const Dashboard = () => {
                     <Button
                       variant="contained"
                       component="a"
-                      href="https://github.com/yourorg/dataidea-logger"
+                      href="https://docs.dataidea.org"
                       target="_blank"
                       startIcon={<MenuBookIcon />}
                       sx={{ 
@@ -423,6 +423,8 @@ const Dashboard = () => {
                   </Paper>
                 </motion.div>
               </Grid>
+
+              
             </Grid>
           </motion.div>
         )}

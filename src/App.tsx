@@ -12,11 +12,55 @@ import Navbar from './components/Navbar'
 import ApiKeys from './components/ApiKeys'
 import LogViewer from './components/LogViewer'
 import UserProfile from './components/UserProfile'
+import Analytics from './components/Analytics'
 
 // Auth context
 import { AuthProvider } from './context/AuthContext'
 
 const theme = createTheme({
+  typography: {
+    fontFamily: '"DM Sans", sans-serif',
+    h1: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontWeight: 700,
+    },
+    h2: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontWeight: 700,
+    },
+    h3: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontWeight: 600,
+    },
+    h4: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontWeight: 600,
+    },
+    h5: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontWeight: 500,
+    },
+    h6: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontWeight: 500,
+    },
+    subtitle1: {
+      fontFamily: '"DM Sans", sans-serif',
+    },
+    subtitle2: {
+      fontFamily: '"DM Sans", sans-serif',
+    },
+    body1: {
+      fontFamily: '"DM Sans", sans-serif',
+    },
+    body2: {
+      fontFamily: '"DM Sans", sans-serif',
+    },
+    button: {
+      fontFamily: '"DM Sans", sans-serif',
+      textTransform: 'none',
+    },
+  },
   palette: {
     mode: 'light',
     primary: {
@@ -24,6 +68,22 @@ const theme = createTheme({
     },
     secondary: {
       main: '#dc004e',
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
     },
   },
 })
@@ -51,6 +111,11 @@ function App() {
             <Route path="/logs" element={
               <PrivateRoute>
                 <LogViewer />
+              </PrivateRoute>
+            } />
+            <Route path="/analytics" element={
+              <PrivateRoute>
+                <Analytics />
               </PrivateRoute>
             } />
             <Route path="/profile" element={
