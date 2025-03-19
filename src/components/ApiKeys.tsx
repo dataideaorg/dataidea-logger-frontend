@@ -29,6 +29,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import AddIcon from '@mui/icons-material/Add'
 import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import { API_URL } from '../api/endpoints'
 
 interface ApiKey {
   id: number
@@ -53,8 +54,6 @@ const ApiKeys = () => {
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   })
-
-  const API_URL = 'https://loggerapi.dataidea.org/api'
 
   useEffect(() => {
     fetchApiKeys()

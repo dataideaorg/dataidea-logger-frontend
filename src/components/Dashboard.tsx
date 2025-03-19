@@ -27,7 +27,7 @@ import EventNoteIcon from '@mui/icons-material/EventNote'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import AuthContext from '../context/AuthContext'
-
+import {API_URL} from '../api/endpoints'
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -83,7 +83,7 @@ const Dashboard = () => {
       try {
         setLoading(true)
         const token = localStorage.getItem('access_token')
-        const response = await axios.get('https://loggerapi.dataidea.org/api/user/stats/', {
+        const response = await axios.get(`${API_URL}/user/stats/`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -103,7 +103,7 @@ const Dashboard = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('access_token')
-      const response = await axios.get('https://loggerapi.dataidea.org/api/user/stats/', {
+      const response = await axios.get(`${API_URL}/user/stats/`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

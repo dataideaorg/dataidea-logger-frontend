@@ -28,6 +28,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { API_URL } from '../api/endpoints'
 
 // Common interface for shared properties
 interface BaseLogMessage {
@@ -89,7 +90,6 @@ const LogViewer = () => {
   const [tabValues, setTabValues] = useState<Record<number, number>>({})
   
   // API and pagination config
-  const API_URL = 'https://loggerapi.dataidea.org/api'
   const LOGS_PER_PAGE = 10
 
   useEffect(() => {

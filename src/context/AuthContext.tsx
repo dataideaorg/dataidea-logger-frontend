@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect, ReactNode } from 'react'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
-
+import { API_URL } from '../api/endpoints'
 interface User {
   id: number
   username: string
@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const API_URL = 'https://loggerapi.dataidea.org/api'
   const AUTH_URL = `${API_URL}/auth`
 
   useEffect(() => {

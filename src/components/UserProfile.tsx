@@ -15,6 +15,7 @@ import {
   CardContent,
 } from '@mui/material'
 import AuthContext from '../context/AuthContext'
+import { API_URL } from '../api/endpoints'
 
 interface UserStats {
   total_event_logs: number;
@@ -41,7 +42,6 @@ const UserProfile = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const API_URL = 'https://loggerapi.dataidea.org/api';
   const AUTH_URL = `${API_URL}/auth`;
 
   useEffect(() => {
