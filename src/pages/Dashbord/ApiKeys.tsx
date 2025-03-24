@@ -29,7 +29,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import AddIcon from '@mui/icons-material/Add'
 import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import { API_URL } from '../api/endpoints'
+import { API_URL } from '../../api/endpoints'
 
 interface ApiKey {
   id: number

@@ -31,7 +31,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import DownloadIcon from '@mui/icons-material/Download'
 import BarChartIcon from '@mui/icons-material/BarChart'
-import { API_URL } from '../api/endpoints'
+import { API_URL } from '../../api/endpoints'
 
 // Common interface for shared properties
 interface BaseLogMessage {

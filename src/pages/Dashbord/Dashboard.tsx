@@ -26,8 +26,8 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey'
 import EventNoteIcon from '@mui/icons-material/EventNote'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import AuthContext from '../context/AuthContext'
-import {API_URL} from '../api/endpoints'
+import AuthContext from '../../context/AuthContext'
+import {API_URL} from '../../api/endpoints'
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },

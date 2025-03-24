@@ -10,7 +10,9 @@ import {
   Alert,
   Link,
 } from '@mui/material'
-import AuthContext from '../context/AuthContext'
+import AuthContext from '../../context/AuthContext'
+import { getGoogleAuthUrl } from '../../api/Auth';
+import GoogleIcon from '@mui/icons-material/Google';
 
 const Login = () => {
   const [username, setUsername] = useState('')
@@ -20,6 +22,20 @@ const Login = () => {
   
   const { login } = useContext(AuthContext)
   const navigate = useNavigate()
+
+  // Google Login
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const authUrl = await getGoogleAuthUrl();
+      window.location.href = authUrl;
+    } catch (error: any) {
+      console.error('Error getting Google auth URL:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,6 +112,13 @@ const Login = () => {
                 {loading ? 'Logging in...' : 'Log In'}
               </Button>
               <Box sx={{ textAlign: 'center' }}>
+                {/* or login with google */}
+                <Typography variant="body2">Or</Typography>
+                <Button onClick={handleGoogleLogin} variant="outlined" color="primary" 
+                sx={{ width: '100%', mt: 2, mb:2, borderColor: '#008374', color: '#008374', '&:hover': { borderColor: '#008374', color: '#008374' } }}>
+                  <GoogleIcon />
+                  Sign in with Google
+                </Button>
                 <Typography variant="body2">
                   Don't have an account?{' '}
                   <Link component={RouterLink} className='text-[#008374]' to="/register">

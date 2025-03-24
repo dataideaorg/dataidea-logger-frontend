@@ -13,12 +13,17 @@ import {
   alpha,
   Stack,
   Tooltip,
-  IconButton
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent
 } from '@mui/material'
 import Plot from 'react-plotly.js'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import DownloadIcon from '@mui/icons-material/Download'
-import { API_URL } from '../api/endpoints'
+import { API_URL } from '../../api/endpoints'
 
 // Analytics data interfaces
 interface MonthlyLogCounts {
@@ -35,6 +40,20 @@ interface SourceCount {
 interface LogLevelCount {
   level: string
   count: number
+}
+
+interface ProjectCount {
+  id: number
+  name: string
+  count: number
+}
+
+interface Project {
+  id: number
+  name: string
+  description: string | null
+  created_at: string
+  is_active: boolean
 }
 
 interface TabPanelProps {
@@ -72,14 +91,43 @@ const Analytics = () => {
   const [monthlyLogCounts, setMonthlyLogCounts] = useState<MonthlyLogCounts[]>([])
   const [llmSourceCounts, setLlmSourceCounts] = useState<SourceCount[]>([])
   const [logLevelCounts, setLogLevelCounts] = useState<LogLevelCount[]>([])
+  const [projectCounts, setProjectCounts] = useState<ProjectCount[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProject, setSelectedProject] = useState<string>('all')
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const theme = useTheme()
 
   useEffect(() => {
+    fetchProjects()
     fetchAnalyticsData()
   }, [])
+
+  useEffect(() => {
+    fetchAnalyticsData()
+  }, [selectedProject])
+
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await axios.get(`${API_URL}/projects/`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Only include active projects
+        const activeProjects = response.data.filter(
+          (project: Project) => project.is_active
+        )
+        setProjects(activeProjects)
+      }
+    } catch (error) {
+      console.error('Failed to fetch projects:', error)
+    }
+  }
 
   const fetchAnalyticsData = async () => {
     try {
@@ -87,7 +135,12 @@ const Analytics = () => {
       setError('')
       const token = localStorage.getItem('access_token')
       
-      const response = await axios.get(`${API_URL}/analytics/`, {
+      let url = `${API_URL}/analytics/`
+      if (selectedProject !== 'all') {
+        url += `?project_id=${selectedProject}`
+      }
+      
+      const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -103,6 +156,9 @@ const Analytics = () => {
       
       // Process log level counts
       setLogLevelCounts(data.log_levels || [])
+
+      // Process project counts
+      setProjectCounts(data.projects || [])
     } catch (error) {
       console.error('Failed to fetch analytics data:', error)
       setError('Failed to load analytics data. Please try again later.')
@@ -119,11 +175,20 @@ const Analytics = () => {
     setActiveTab(newValue)
   }
 
+  const handleProjectChange = (event: SelectChangeEvent) => {
+    setSelectedProject(event.target.value)
+  }
+
   const handleDownloadCSV = async (dataType: string) => {
     try {
       const token = localStorage.getItem('access_token')
       
-      const response = await axios.get(`${API_URL}/analytics/download/${dataType}`, {
+      let apiUrl = `${API_URL}/analytics/download/${dataType}`
+      if (selectedProject !== 'all') {
+        apiUrl += `?project_id=${selectedProject}`
+      }
+      
+      const response = await axios.get(apiUrl, {
         headers: {
           Authorization: `Bearer ${token}`
         },
@@ -131,9 +196,9 @@ const Analytics = () => {
       })
       
       // Create a download link and trigger download
-      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
-      link.href = url
+      link.href = downloadUrl
       link.setAttribute('download', `${dataType}_analytics.csv`)
       document.body.appendChild(link)
       link.click()
@@ -300,6 +365,55 @@ const Analytics = () => {
     )
   }
 
+  // Projects Pie Chart
+  const renderProjectsChart = () => {
+    if (selectedProject !== 'all') {
+      return <Typography>Select 'All Projects' to view project distribution</Typography>
+    }
+
+    if (projectCounts.length === 0) {
+      return <Typography>No project data available</Typography>
+    }
+
+    return (
+      <Box sx={{ height: 400, width: '100%' }}>
+        <Plot
+          data={[
+            {
+              values: projectCounts.map(item => item.count),
+              labels: projectCounts.map(item => item.name),
+              type: 'pie',
+              marker: {
+                colors: COLORS.slice(0, projectCounts.length)
+              },
+              textinfo: 'label+percent',
+              textposition: 'outside',
+              automargin: true
+            }
+          ]}
+          layout={{
+            title: 'Project Distribution',
+            autosize: true,
+            showlegend: true,
+            legend: {
+              orientation: 'h',
+              y: -0.2
+            },
+            margin: {
+              l: 50,
+              r: 50,
+              b: 100,
+              t: 50,
+              pad: 4
+            }
+          }}
+          style={{ width: '100%', height: '100%' }}
+          useResizeHandler={true}
+        />
+      </Box>
+    )
+  }
+
   // Combined Summary Chart
   const renderCombinedChart = () => {
     if (monthlyLogCounts.length === 0) {
@@ -392,6 +506,27 @@ const Analytics = () => {
         </Stack>
       </Box>
 
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Filter by Project</Typography>
+        <FormControl fullWidth sx={{ maxWidth: 300 }}>
+          <InputLabel id="project-select-label">Project</InputLabel>
+          <Select
+            labelId="project-select-label"
+            id="project-select"
+            value={selectedProject}
+            label="Project"
+            onChange={handleProjectChange}
+          >
+            <MenuItem value="all">All Projects</MenuItem>
+            {projects.map((project) => (
+              <MenuItem key={project.id} value={String(project.id)}>
+                {project.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Paper>
+
       {error && (
         <Paper
           elevation={0}
@@ -414,10 +549,12 @@ const Analytics = () => {
       ) : (
         <>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={activeTab} onChange={handleTabChange} aria-label="analytics tabs">
+            <Tabs value={activeTab} onChange={handleTabChange} aria-label="analytics tabs" 
+                variant="scrollable" scrollButtons="auto">
               <Tab label="Monthly Trend" />
               <Tab label="LLM Sources" />
               <Tab label="Log Levels" />
+              <Tab label="Projects" />
               <Tab label="Combined View" />
             </Tabs>
           </Box>
@@ -441,6 +578,12 @@ const Analytics = () => {
           </TabPanel>
           
           <TabPanel value={activeTab} index={3}>
+            <Paper elevation={3} sx={{ p: 3 }}>
+              {renderProjectsChart()}
+            </Paper>
+          </TabPanel>
+          
+          <TabPanel value={activeTab} index={4}>
             <Paper elevation={3} sx={{ p: 3 }}>
               {renderCombinedChart()}
             </Paper>

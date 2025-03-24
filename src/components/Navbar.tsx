@@ -25,6 +25,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import VpnKeyIcon from '@mui/icons-material/VpnKey'
 import ListAltIcon from '@mui/icons-material/ListAlt'
 import LogoutIcon from '@mui/icons-material/Logout'
+import FolderIcon from '@mui/icons-material/Folder'
 import AuthContext from '../context/AuthContext'
 
 const Navbar = () => {
@@ -52,6 +53,7 @@ const Navbar = () => {
 
   const navItems = isAuthenticated ? [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+    { text: 'Projects', icon: <FolderIcon />, path: '/projects' },
     { text: 'API Keys', icon: <VpnKeyIcon />, path: '/api-keys' },
     { text: 'Logs', icon: <ListAltIcon />, path: '/logs' },
     { text: 'Analytics', icon: <BarChartIcon />, path: '/analytics' },
@@ -160,6 +162,18 @@ const Navbar = () => {
                     }}
                   >
                     Dashboard
+                  </Button>
+                  <Button 
+                    color="inherit" 
+                    component={RouterLink} 
+                    to="/projects"
+                    sx={{ 
+                      fontFamily: '"DM Sans", sans-serif',
+                      opacity: location.pathname === '/projects' ? 1 : 0.8,
+                      fontWeight: location.pathname === '/projects' ? 600 : 400
+                    }}
+                  >
+                    Projects
                   </Button>
                   <Button 
                     color="inherit" 

@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>
   register: (username: string, email: string, password: string, passwordConfirm: string) => Promise<void>
   logout: () => void
+  handleGoogleLoginSuccess: (accessToken: string, refreshToken: string, userData: any) => void
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: () => {},
+  handleGoogleLoginSuccess: () => {},
 })
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -126,6 +128,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false)
   }
 
+  // New method to handle Google login success
+  const handleGoogleLoginSuccess = (accessToken: string, refreshToken: string, userData: any) => {
+    console.log("handleGoogleLoginSuccess called with:", { 
+      hasAccessToken: !!accessToken, 
+      hasRefreshToken: !!refreshToken,
+      userData: userData ? { ...userData, id: userData.id } : null 
+    });
+
+    if (!accessToken || !refreshToken) {
+      console.error("Missing tokens in Google login data");
+      return;
+    }
+
+    try {
+      // Store tokens
+      localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('refresh_token', refreshToken);
+      
+      // Set the Authorization header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      
+      // Create a user object from userData
+      // Handle different possible structures from the backend
+      const user = {
+        id: userData.id,
+        username: userData.username || userData.email?.split('@')[0] || 'user',
+        email: userData.email || '',
+      };
+      
+      console.log("Setting user state to:", user);
+      
+      // Update state
+      setUser(user);
+      setIsAuthenticated(true);
+      
+      console.log("Authentication state updated successfully");
+    } catch (error) {
+      console.error("Error in handleGoogleLoginSuccess:", error);
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -135,6 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         logout,
+        handleGoogleLoginSuccess,
       }}
     >
       {children}

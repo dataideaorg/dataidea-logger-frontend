@@ -1,0 +1,31 @@
+<!-- public/404.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found</title>
+  <script>
+    // For custom domain, we can use a simpler redirect approach
+    const path = window.location.pathname;
+    // Simply redirect to the homepage with the path as hash
+    window.location.href = '/#' + path;
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Page Not Found</h1>
+  <p>Redirecting to homepage...</p>
+</body>
+</html>

@@ -14,8 +14,8 @@ import {
   Card,
   CardContent,
 } from '@mui/material'
-import AuthContext from '../context/AuthContext'
-import { API_URL } from '../api/endpoints'
+import AuthContext from '../../context/AuthContext'
+import { API_URL } from '../../api/endpoints'
 
 interface UserStats {
   total_event_logs: number;

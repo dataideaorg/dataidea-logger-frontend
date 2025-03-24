@@ -10,7 +10,7 @@ import {
   Alert,
   Link,
 } from '@mui/material'
-import AuthContext from '../context/AuthContext'
+import AuthContext from '../../context/AuthContext'
 
 const Register = () => {
   const [username, setUsername] = useState('')
