@@ -20,13 +20,17 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  useTheme,
+  // useTheme,
   alpha,
-  Tooltip
+  Tooltip,
+  Switch,
+  FormControlLabel
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import { API_URL } from '../../api/endpoints'
 import { motion } from 'framer-motion'
 
@@ -48,7 +52,14 @@ const Projects = () => {
   const [currentProject, setCurrentProject] = useState<Project | null>(null)
   const [projectName, setProjectName] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
-  const theme = useTheme()
+  const [showInactive, setShowInactive] = useState(false)
+  // const theme = useTheme()
+
+  // Colors
+  const primaryColor = '#008374'
+  // const secondaryColor = '#66fdee'
+  // const primaryLight = alpha(primaryColor, 0.1)
+  const grayColor = '#757575'
 
   useEffect(() => {
     fetchProjects()
@@ -71,6 +82,12 @@ const Projects = () => {
       setLoading(false)
     }
   }
+
+  // Filter projects based on showInactive state
+  const filteredProjects = projects.filter(project => showInactive || project.is_active)
+  
+  // Count inactive projects
+  const inactiveProjectsCount = projects.filter(project => !project.is_active).length
 
   const handleCreateProject = () => {
     setEditMode(false)
@@ -156,6 +173,10 @@ const Projects = () => {
     }
   }
 
+  const handleToggleShowInactive = () => {
+    setShowInactive(prev => !prev)
+  }
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -188,10 +209,15 @@ const Projects = () => {
         </Typography>
         <Button
           variant="contained"
-          color="primary"
           startIcon={<AddIcon />}
           onClick={handleCreateProject}
-          sx={{ borderRadius: 8 }}
+          sx={{ 
+            borderRadius: 8,
+            bgcolor: primaryColor,
+            '&:hover': {
+              bgcolor: alpha(primaryColor, 0.8),
+            }
+          }}
         >
           New Project
         </Button>
@@ -205,11 +231,48 @@ const Projects = () => {
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
-          <CircularProgress />
+          <CircularProgress sx={{ color: primaryColor }} />
         </Box>
       ) : (
         <>
-          {projects.length === 0 ? (
+          {/* Show/Hide inactive projects toggle */}
+          {inactiveProjectsCount > 0 && (
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+              <FormControlLabel
+                control={
+                  <Switch 
+                    checked={showInactive}
+                    onChange={handleToggleShowInactive}
+                    color="primary"
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: primaryColor,
+                        '&:hover': {
+                          backgroundColor: alpha(primaryColor, 0.1),
+                        },
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: primaryColor,
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {showInactive ? <VisibilityIcon sx={{ mr: 0.5, fontSize: 18 }} /> : <VisibilityOffIcon sx={{ mr: 0.5, fontSize: 18 }} />}
+                    <Typography variant="body2">
+                      {showInactive 
+                        ? "Hiding inactive projects" 
+                        : `Show inactive projects (${inactiveProjectsCount})`}
+                    </Typography>
+                  </Box>
+                }
+                sx={{ ml: 'auto' }}
+              />
+            </Box>
+          )}
+
+          {filteredProjects.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 No projects found
@@ -219,10 +282,15 @@ const Projects = () => {
               </Typography>
               <Button
                 variant="contained"
-                color="primary"
                 startIcon={<AddIcon />}
                 onClick={handleCreateProject}
-                sx={{ mt: 2 }}
+                sx={{ 
+                  mt: 2,
+                  bgcolor: primaryColor,
+                  '&:hover': {
+                    bgcolor: alpha(primaryColor, 0.8),
+                  }
+                }}
               >
                 Create Project
               </Button>
@@ -234,7 +302,7 @@ const Projects = () => {
               animate="visible"
             >
               <Grid container spacing={3}>
-                {projects.map((project) => (
+                {filteredProjects.map((project) => (
                   <Grid item xs={12} md={6} lg={4} key={project.id}>
                     <motion.div variants={itemVariants}>
                       <Card 
@@ -252,7 +320,7 @@ const Projects = () => {
                             left: 0,
                             right: 0,
                             height: '4px',
-                            backgroundColor: project.is_active ? theme.palette.primary.main : '#ccc',
+                            backgroundColor: project.is_active ? primaryColor : grayColor,
                           }
                         }}
                         variant="outlined"
@@ -264,8 +332,13 @@ const Projects = () => {
                             </Typography>
                             <Chip 
                               label={project.is_active ? "Active" : "Inactive"} 
-                              color={project.is_active ? "success" : "default"}
                               size="small"
+                              sx={{ 
+                                backgroundColor: project.is_active 
+                                  ? alpha(primaryColor, 0.1) 
+                                  : alpha(grayColor, 0.1),
+                                color: project.is_active ? primaryColor : grayColor
+                              }}
                             />
                           </Box>
                           <Typography variant="body2" color="text.secondary" paragraph>
@@ -295,7 +368,9 @@ const Projects = () => {
                               size="small" 
                               onClick={() => handleToggleActive(project)}
                               aria-label={project.is_active ? "deactivate" : "activate"}
-                              color={project.is_active ? "default" : "success"}
+                              sx={{
+                                color: project.is_active ? undefined : primaryColor
+                              }}
                             >
                               {project.is_active ? <DeleteIcon fontSize="small" /> : <AddIcon fontSize="small" />}
                             </IconButton>
@@ -333,7 +408,7 @@ const Projects = () => {
           />
           <TextField
             margin="dense"
-            label="Description (Optional)"
+            label="Description (optional)"
             type="text"
             fullWidth
             variant="outlined"
@@ -344,8 +419,20 @@ const Projects = () => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary" disabled={!projectName.trim()}>
+          <Button onClick={handleCloseDialog} sx={{ color: 'text.secondary' }}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained"
+            sx={{ 
+              bgcolor: primaryColor,
+              '&:hover': {
+                bgcolor: alpha(primaryColor, 0.8),
+              }
+            }}
+            disabled={!projectName.trim()}
+          >
             {editMode ? 'Update' : 'Create'}
           </Button>
         </DialogActions>

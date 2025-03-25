@@ -17,7 +17,7 @@ import {
   Tooltip,
   IconButton,
   Chip,
-  Divider,
+  // Divider,
   Avatar,
   LinearProgress,
 } from '@mui/material'
@@ -31,10 +31,10 @@ import SmartToyIcon from '@mui/icons-material/SmartToy'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import FolderIcon from '@mui/icons-material/Folder'
-import SettingsIcon from '@mui/icons-material/Settings'
-import DownloadIcon from '@mui/icons-material/Download'
+// import SettingsIcon from '@mui/icons-material/Settings'
+// import DownloadIcon from '@mui/icons-material/Download'
 import StorageIcon from '@mui/icons-material/Storage'
-import DeleteIcon from '@mui/icons-material/Delete'
+// import DeleteIcon from '@mui/icons-material/Delete'
 import AuthContext from '../../context/AuthContext'
 import {API_URL} from '../../api/endpoints'
 // Animation variants
@@ -131,8 +131,11 @@ const Dashboard = () => {
           Authorization: `Bearer ${token}`
         }
       })
-      // Sort projects by log count (highest first) and take only the top 3
-      const sortedProjects = response.data.sort((a: Project, b: Project) => b.log_count - a.log_count).slice(0, 3)
+      // Filter active projects, sort by log count (highest first) and take only the top 3
+      const sortedProjects = response.data
+        .filter((project: Project) => project.is_active)
+        .sort((a: Project, b: Project) => b.log_count - a.log_count)
+        .slice(0, 3)
       setProjects(sortedProjects)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
@@ -141,22 +144,22 @@ const Dashboard = () => {
     }
   }
 
-  const refreshStats = async () => {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('access_token')
-      const response = await axios.get(`${API_URL}/user/stats/`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      setStats(response.data)
-    } catch (error) {
-      console.error('Failed to refresh stats:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // const refreshStats = async () => {
+  //   try {
+  //     setLoading(true)
+  //     const token = localStorage.getItem('access_token')
+  //     const response = await axios.get(`${API_URL}/user/stats/`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`
+  //       }
+  //     })
+  //     setStats(response.data)
+  //   } catch (error) {
+  //     console.error('Failed to refresh stats:', error)
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   const refreshAll = () => {
     fetchStats();
@@ -167,7 +170,7 @@ const Dashboard = () => {
   const secondaryColor = '#66fdee'
   const primaryLight = alpha(primaryColor, 0.1)
   const primaryMedium = alpha(primaryColor, 0.2)
-  const secondaryLight = alpha(secondaryColor, 0.1)
+  // const secondaryLight = alpha(secondaryColor, 0.1)
   
   // Colors for status indicators
   const blueColor = '#0288d1'
