@@ -13,6 +13,9 @@ const GoogleCallback = () => {
   const { handleGoogleLoginSuccess } = useContext(AuthContext);
 
   useEffect(() => {
+    // Check if we've already processed this code
+    const recentAuthFlag = sessionStorage.getItem('recent_google_auth');
+    
     const handleGoogleCallback = async () => {
       console.log("GoogleCallback component mounted, processing authentication...");
       let code = null;
@@ -48,6 +51,13 @@ const GoogleCallback = () => {
         setLoading(false);
         toast.error('Authentication failed: No code received from Google');
         setTimeout(() => navigate('/login'), 3000);
+        return;
+      }
+
+      // Check if we already processed this exact code to prevent duplicate processing
+      if (recentAuthFlag && recentAuthFlag === code) {
+        console.log("Already processed this auth code, redirecting to dashboard");
+        navigate('/dashboard');
         return;
       }
       
@@ -108,24 +118,54 @@ const GoogleCallback = () => {
           data.user
         );
         
+        // Save the code to sessionStorage to prevent duplicate processing
+        sessionStorage.setItem('recent_google_auth', code);
+        
         console.log("Authentication successful, user state updated");
         toast.success("Google login successful! Redirecting...");
         
         // Add a small delay to ensure state updates before navigation
         setTimeout(() => {
           console.log("Navigating to dashboard...");
-          navigate('/dashboard');
+          // Check if we have a saved redirect path
+          const redirectAfterAuth = sessionStorage.getItem('auth_redirect_after');
+          if (redirectAfterAuth) {
+            console.log("Redirecting to saved path:", redirectAfterAuth);
+            sessionStorage.removeItem('auth_redirect_after');
+            navigate(redirectAfterAuth);
+          } else {
+            navigate('/dashboard');
+          }
         }, 500);
       } catch (error: any) {
         console.error('Google authentication error:', error);
         setError(error.message || 'Failed to authenticate with Google');
         setLoading(false);
         toast.error('Failed to authenticate with Google');
+        
+        // Clear the auth flag if we failed
+        sessionStorage.removeItem('recent_google_auth');
+        
         setTimeout(() => navigate('/login'), 3000);
       }
     };
     
-    handleGoogleCallback();
+    // Don't reprocess the same code
+    if (!recentAuthFlag) {
+      handleGoogleCallback();
+    } else {
+      console.log("Clearing recent_google_auth flag");
+      // Wait a moment, then clear the flag to allow future logins
+      setTimeout(() => {
+        sessionStorage.removeItem('recent_google_auth');
+      }, 5000);
+      navigate('/dashboard');
+    }
+    
+    // Cleanup function to prevent processing during unmounts/remounts
+    return () => {
+      // Keep the flag for a while to prevent reprocessing during remounts
+    };
   }, [location, navigate, handleGoogleLoginSuccess]);
 
   if (loading) {

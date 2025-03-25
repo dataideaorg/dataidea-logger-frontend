@@ -110,6 +110,20 @@ const GoogleRedirectHandler = () => {
       
       if (code) {
         console.log("Found authorization code, redirecting to hash-based callback route");
+        
+        // Save intended destination if one was provided
+        const state = urlParams.get('state');
+        if (state) {
+          try {
+            const stateData = JSON.parse(decodeURIComponent(state));
+            if (stateData.returnTo) {
+              sessionStorage.setItem('auth_redirect_after', stateData.returnTo);
+            }
+          } catch (err) {
+            console.error("Could not parse state parameter:", err);
+          }
+        }
+        
         // Redirect to your hash-based route with the code
         window.location.href = `/#/auth/google/callback?code=${code}`;
       }
@@ -185,8 +199,13 @@ function App() {
 
 // Private route component
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const [localAuthCheck, setLocalAuthCheck] = useState<boolean | null>(null)
+  const [localAuthCheck, setLocalAuthCheck] = useState<boolean | null>(null);
+  const [authStable, setAuthStable] = useState(false);
   const { isAuthenticated, loading } = useContext(AuthContext);
+
+  useEffect(() => {
+    console.log("PrivateRoute render - Auth context state:", { isAuthenticated, loading });
+  }, [isAuthenticated, loading]);
 
   // This is a backup check in case the context isn't ready yet
   useEffect(() => {
@@ -239,7 +258,32 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   // Use context state if available, otherwise use local check
   const finalAuthState = isAuthenticated || localAuthCheck;
 
-  if (loading && localAuthCheck === null) {
+  // Add stability to prevent flicker - wait for auth state to stabilize
+  useEffect(() => {
+    // Only update stability if we have a definitive answer
+    if (finalAuthState !== null) {
+      console.log("Auth state summary:", {
+        contextAuth: isAuthenticated, 
+        localTokenAuth: localAuthCheck,
+        finalDecision: finalAuthState,
+        stillLoading: loading && localAuthCheck === null
+      });
+      
+      // If already stable, don't change
+      if (authStable) return;
+      
+      // Wait a moment to let the state settle 
+      console.log("Waiting for auth state to stabilize...");
+      const timer = setTimeout(() => {
+        console.log("Auth state stabilized");
+        setAuthStable(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [finalAuthState, isAuthenticated, localAuthCheck, loading, authStable]);
+
+  if (!authStable || (loading && localAuthCheck === null)) {
     console.log("Still loading auth state...");
     // Still checking authentication
     return (
