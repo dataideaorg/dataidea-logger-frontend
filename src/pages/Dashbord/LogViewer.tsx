@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useSearchParams, useParams } from 'react-router-dom'
 import {
   Container,
   Typography,
@@ -24,6 +24,8 @@ import {
   Tab,
   Stack,
   Tooltip,
+  Breadcrumbs,
+  Link,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -31,6 +33,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import DownloadIcon from '@mui/icons-material/Download'
 import BarChartIcon from '@mui/icons-material/BarChart'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { API_URL } from '../../api/endpoints'
 
 // Common interface for shared properties
@@ -76,7 +79,26 @@ function TabPanel(props: TabPanelProps) {
   )
 }
 
+interface Project {
+  id: number
+  name: string
+  description: string | null
+  created_at: string
+  is_active: boolean
+}
+
 const LogViewer = () => {
+  // Get project ID from either route params or search params
+  const { projectId: routeProjectId } = useParams<{ projectId: string }>()
+  const [searchParams] = useSearchParams()
+  const queryProjectId = searchParams.get('projectId')
+  
+  // Use route param if available, otherwise use query param
+  const projectId = routeProjectId || queryProjectId
+  
+  // Project info if viewing project-specific logs
+  const [project, setProject] = useState<Project | null>(null)
+  
   // Log state for both types
   const [eventLogs, setEventLogs] = useState<EventLogMessage[]>([])
   const [llmLogs, setLlmLogs] = useState<LlmLogMessage[]>([])
@@ -97,35 +119,87 @@ const LogViewer = () => {
   // API and pagination config
   const LOGS_PER_PAGE = 10
 
+  // Fetch project details if projectId is provided
+  useEffect(() => {
+    if (projectId) {
+      fetchProjectDetails()
+    } else {
+      setProject(null)
+    }
+  }, [projectId])
+
   useEffect(() => {
     fetchLogs()
-  }, [activeLogTab])
+  }, [activeLogTab, projectId])
 
   // Apply filters and update pagination when search or level filter changes
   useEffect(() => {
     applyFiltersAndPaginate()
   }, [page, levelFilter, searchTerm, allEventLogs, allLlmLogs])
 
+  const fetchProjectDetails = async () => {
+    try {
+      if (!projectId) return
+      
+      const token = localStorage.getItem('access_token')
+      const response = await axios.get(`${API_URL}/projects/${projectId}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setProject(response.data)
+    } catch (err) {
+      console.error('Error fetching project details:', err)
+      setError('Failed to load project details.')
+    }
+  }
+
   const fetchLogs = async () => {
     try {
       setLoading(true)
-      console.log(loading)
       setError('')
       
+      const token = localStorage.getItem('access_token')
+      const headers = {
+        Authorization: `Bearer ${token}`
+      }
+      
       if (activeLogTab === 0) {
-        // Fetch all event logs
-        const response = await axios.get(`${API_URL}/event-logs/`)
-        setAllEventLogs(response.data)
+        // Fetch event logs
+        let url = `${API_URL}/event-logs/`
+        
+        // Add project filter if projectId is provided
+        if (projectId) {
+          // Handle both REST-style filtering and query param filtering based on what backend supports
+          const response = await axios.get(url, { 
+            headers,
+            params: { project: projectId }
+          })
+          setAllEventLogs(response.data)
+        } else {
+          const response = await axios.get(url, { headers })
+          setAllEventLogs(response.data)
+        }
       } else {
-        // Fetch all LLM logs
-        const response = await axios.get(`${API_URL}/llm-logs/`)
-        setAllLlmLogs(response.data)
+        // Fetch LLM logs
+        let url = `${API_URL}/llm-logs/`
+        
+        // Add project filter if projectId is provided
+        if (projectId) {
+          // Handle both REST-style filtering and query param filtering based on what backend supports
+          const response = await axios.get(url, { 
+            headers,
+            params: { project: projectId }
+          })
+          setAllLlmLogs(response.data)
+        } else {
+          const response = await axios.get(url, { headers })
+          setAllLlmLogs(response.data)
+        }
       }
     } catch (err) {
-
       console.error('Error fetching logs:', err)
       setError('Failed to load logs. Please try again.')
-      console.log(error)
     } finally {
       setLoading(false)
     }
@@ -612,14 +686,45 @@ const LogViewer = () => {
     <Container maxWidth="xl">
       <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5" component="h1">Log Explorer</Typography>
+          <Box>
+            {projectId && project ? (
+              <>
+                <Breadcrumbs separator="›" aria-label="breadcrumb" sx={{ mb: 1 }}>
+                  <Link component={RouterLink} to="/logs" color="inherit">
+                    All Logs
+                  </Link>
+                  <Typography color="text.primary">{project.name}</Typography>
+                </Breadcrumbs>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="h5" component="h1">Logs for Project: {project.name}</Typography>
+                  <Button
+                    variant="text"
+                    color="primary"
+                    component={RouterLink}
+                    to="/logs"
+                    startIcon={<ArrowBackIcon />}
+                    sx={{ ml: 2 }}
+                  >
+                    Back to All Logs
+                  </Button>
+                </Box>
+                {project.description && (
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {project.description}
+                  </Typography>
+                )}
+              </>
+            ) : (
+              <Typography variant="h5" component="h1">Log Explorer</Typography>
+            )}
+          </Box>
           <Stack direction="row" spacing={2}>
             <Button
               variant="outlined"
               color="primary"
               startIcon={<BarChartIcon />}
               component={RouterLink}
-              to="/analytics"
+              to={projectId ? `/analytics?project_id=${projectId}` : "/analytics"}
             >
               View Analytics
             </Button>

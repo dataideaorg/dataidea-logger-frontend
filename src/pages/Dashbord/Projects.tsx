@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import {
   Container,
   Typography,
@@ -27,6 +28,7 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import { API_URL } from '../../api/endpoints'
 import { motion } from 'framer-motion'
 
@@ -49,6 +51,7 @@ const Projects = () => {
   const [projectName, setProjectName] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
   const theme = useTheme()
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchProjects()
@@ -156,6 +159,10 @@ const Projects = () => {
     }
   }
 
+  const handleViewLogs = (projectId: number) => {
+    navigate(`/projects/${projectId}/logs`)
+  }
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -245,6 +252,10 @@ const Projects = () => {
                           borderColor: project.is_active ? 'transparent' : alpha('#000', 0.1),
                           opacity: project.is_active ? 1 : 0.7,
                           position: 'relative',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            boxShadow: 3,
+                          },
                           '&::before': {
                             content: '""',
                             position: 'absolute',
@@ -256,6 +267,7 @@ const Projects = () => {
                           }
                         }}
                         variant="outlined"
+                        onClick={() => project.is_active && handleViewLogs(project.id)}
                       >
                         <CardContent sx={{ flexGrow: 1 }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
@@ -266,6 +278,7 @@ const Projects = () => {
                               label={project.is_active ? "Active" : "Inactive"} 
                               color={project.is_active ? "success" : "default"}
                               size="small"
+                              onClick={(e) => e.stopPropagation()}
                             />
                           </Box>
                           <Typography variant="body2" color="text.secondary" paragraph>
@@ -280,26 +293,46 @@ const Projects = () => {
                             Created: {new Date(project.created_at).toLocaleDateString()}
                           </Typography>
                         </CardContent>
-                        <CardActions sx={{ justifyContent: 'flex-end', p: 2, pt: 0 }}>
-                          <Tooltip title="Edit project">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleEditProject(project)}
-                              aria-label="edit"
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={project.is_active ? "Deactivate project" : "Activate project"}>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleToggleActive(project)}
-                              aria-label={project.is_active ? "deactivate" : "activate"}
-                              color={project.is_active ? "default" : "success"}
-                            >
-                              {project.is_active ? <DeleteIcon fontSize="small" /> : <AddIcon fontSize="small" />}
-                            </IconButton>
-                          </Tooltip>
+                        <CardActions sx={{ justifyContent: 'space-between', p: 2, pt: 0 }}>
+                          <Button
+                            size="small"
+                            color="primary"
+                            startIcon={<VisibilityIcon />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewLogs(project.id);
+                            }}
+                            disabled={!project.is_active}
+                          >
+                            View Logs
+                          </Button>
+                          <Box>
+                            <Tooltip title="Edit project">
+                              <IconButton 
+                                size="small" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditProject(project);
+                                }}
+                                aria-label="edit"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={project.is_active ? "Deactivate project" : "Activate project"}>
+                              <IconButton 
+                                size="small" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleActive(project);
+                                }}
+                                aria-label={project.is_active ? "deactivate" : "activate"}
+                                color={project.is_active ? "default" : "success"}
+                              >
+                                {project.is_active ? <DeleteIcon fontSize="small" /> : <AddIcon fontSize="small" />}
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         </CardActions>
                       </Card>
                     </motion.div>

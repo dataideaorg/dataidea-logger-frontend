@@ -174,6 +174,11 @@ function App() {
                 <LogViewer />
               </PrivateRoute>
             } />
+            <Route path="/projects/:projectId/logs" element={
+              <PrivateRoute>
+                <LogViewer />
+              </PrivateRoute>
+            } />
             <Route path="/analytics" element={
               <PrivateRoute>
                 <Analytics />
