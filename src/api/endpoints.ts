@@ -1,3 +1,3 @@
-const API_URL = 'http://localhost:8000/api'
+const API_URL = 'https://loggerapi.dataidea.org/api'
 
 export { API_URL }
