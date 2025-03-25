@@ -157,6 +157,7 @@ const LogViewer = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true)
+      console.log(loading)
       setError('')
       
       const token = localStorage.getItem('access_token')
@@ -200,6 +201,7 @@ const LogViewer = () => {
     } catch (err) {
       console.error('Error fetching logs:', err)
       setError('Failed to load logs. Please try again.')
+      console.log(error)
     } finally {
       setLoading(false)
     }
@@ -342,17 +344,21 @@ const LogViewer = () => {
       const token = localStorage.getItem('access_token');
       
       // Make an authenticated request to the download endpoint
-      const response = await axios.get(`${API_URL}/event-logs/download/`, {
+      let apiUrl = `${API_URL}/event-logs/download/`;
+      const params = projectId ? { project: projectId } : {};
+      
+      const response = await axios.get(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
+        params,
         responseType: 'blob' // Important for file downloads
       });
       
       // Create a download link and trigger the download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       
       // Get filename from Content-Disposition header or use a default
       const contentDisposition = response.headers['content-disposition'];
@@ -365,7 +371,7 @@ const LogViewer = () => {
       link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading event logs:', error);
@@ -379,17 +385,21 @@ const LogViewer = () => {
       const token = localStorage.getItem('access_token');
       
       // Make an authenticated request to the download endpoint
-      const response = await axios.get(`${API_URL}/llm-logs/download/`, {
+      let apiUrl = `${API_URL}/llm-logs/download/`;
+      const params = projectId ? { project: projectId } : {};
+      
+      const response = await axios.get(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
+        params,
         responseType: 'blob' // Important for file downloads
       });
       
       // Create a download link and trigger the download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       
       // Get filename from Content-Disposition header or use a default
       const contentDisposition = response.headers['content-disposition'];
@@ -402,7 +412,7 @@ const LogViewer = () => {
       link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading LLM logs:', error);
@@ -416,17 +426,21 @@ const LogViewer = () => {
       const token = localStorage.getItem('access_token');
       
       // Make an authenticated request to the download endpoint
-      const response = await axios.get(`${API_URL}/download/all-logs/`, {
+      let apiUrl = `${API_URL}/download/all-logs/`;
+      const params = projectId ? { project: projectId } : {};
+      
+      const response = await axios.get(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
+        params,
         responseType: 'blob' // Important for file downloads
       });
       
       // Create a download link and trigger the download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       
       // Get filename from Content-Disposition header or use a default
       const contentDisposition = response.headers['content-disposition'];
@@ -439,7 +453,7 @@ const LogViewer = () => {
       link.click();
       
       // Clean up
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading all logs:', error);
