@@ -224,16 +224,6 @@ const Navbar = () => {
                       <PersonIcon />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Analytics">
-                    <IconButton 
-                      color="inherit" 
-                      component={RouterLink} 
-                      to="/analytics"
-                      sx={{ mr: 1 }}
-                    >
-                      <BarChartIcon />
-                    </IconButton>
-                  </Tooltip>
                   <Button 
                     color="inherit" 
                     onClick={handleLogout}

@@ -26,6 +26,17 @@ import {
   Tooltip,
   Breadcrumbs,
   Link,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Card,
+  CardContent,
+  CardActions,
+  useMediaQuery,
+  useTheme,
+  Divider,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -34,6 +45,9 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import DownloadIcon from '@mui/icons-material/Download'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import DeleteIcon from '@mui/icons-material/Delete'
+import InfoIcon from '@mui/icons-material/Info'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { API_URL } from '../../api/endpoints'
 
 // Common interface for shared properties
@@ -96,6 +110,10 @@ const LogViewer = () => {
   // Use route param if available, otherwise use query param
   const projectId = routeProjectId || queryProjectId
   
+  // Theme and responsive hooks
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  
   // Project info if viewing project-specific logs
   const [project, setProject] = useState<Project | null>(null)
   
@@ -115,6 +133,13 @@ const LogViewer = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
   const [tabValues, setTabValues] = useState<Record<number, number>>({})
+  
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false)
+  const [logToDelete, setLogToDelete] = useState<{id: number, type: 'event' | 'llm'} | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null)
   
   // API and pagination config
   const LOGS_PER_PAGE = 10
@@ -461,6 +486,124 @@ const LogViewer = () => {
     }
   }
 
+  // Handler for opening delete confirmation dialog
+  const handleOpenDeleteDialog = (id: number, type: 'event' | 'llm') => {
+    setLogToDelete({ id, type })
+    setDeleteDialogOpen(true)
+  }
+
+  // Handler for closing delete confirmation dialog
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false)
+    // Reset after a short delay to allow dialog to close
+    setTimeout(() => {
+      setLogToDelete(null)
+      setDeleteSuccess(null)
+    }, 300)
+  }
+
+  // Handler for opening delete all confirmation dialog
+  const handleOpenDeleteAllDialog = () => {
+    setDeleteAllDialogOpen(true)
+  }
+
+  // Handler for closing delete all confirmation dialog
+  const handleCloseDeleteAllDialog = () => {
+    setDeleteAllDialogOpen(false)
+    // Reset after a short delay to allow dialog to close
+    setTimeout(() => {
+      setDeleteSuccess(null)
+    }, 300)
+  }
+
+  // Handler for deleting a single log
+  const handleDeleteLog = async () => {
+    if (!logToDelete) return
+
+    try {
+      setDeleteLoading(true)
+      setError('')
+      
+      const token = localStorage.getItem('access_token')
+      const headers = {
+        Authorization: `Bearer ${token}`
+      }
+      
+      const apiUrl = logToDelete.type === 'event' 
+        ? `${API_URL}/event-logs/${logToDelete.id}/`
+        : `${API_URL}/llm-logs/${logToDelete.id}/`
+        
+      await axios.delete(apiUrl, { headers })
+      
+      // Remove the deleted log from state
+      if (logToDelete.type === 'event') {
+        setAllEventLogs(prevLogs => prevLogs.filter(log => log.id !== logToDelete.id))
+        setEventLogs(prevLogs => prevLogs.filter(log => log.id !== logToDelete.id))
+      } else {
+        setAllLlmLogs(prevLogs => prevLogs.filter(log => log.id !== logToDelete.id))
+        setLlmLogs(prevLogs => prevLogs.filter(log => log.id !== logToDelete.id))
+      }
+      
+      setDeleteSuccess('Log deleted successfully')
+      
+      // Close dialog after a short delay
+      setTimeout(() => {
+        handleCloseDeleteDialog()
+      }, 1000)
+      
+    } catch (err) {
+      console.error('Error deleting log:', err)
+      setError('Failed to delete log. Please try again.')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  // Handler for deleting all logs
+  const handleDeleteAllLogs = async () => {
+    try {
+      setDeleteLoading(true)
+      setError('')
+      
+      const token = localStorage.getItem('access_token')
+      const headers = {
+        Authorization: `Bearer ${token}`
+      }
+      
+      // Add project parameter if viewing project-specific logs
+      const params = projectId ? { project: projectId } : {}
+      
+      await axios.delete(`${API_URL}/delete/all-logs/`, { 
+        headers,
+        params
+      })
+      
+      // Clear logs from state
+      if (activeLogTab === 0) {
+        setAllEventLogs([])
+        setEventLogs([])
+      } else {
+        setAllLlmLogs([])
+        setLlmLogs([])
+      }
+      
+      setDeleteSuccess(projectId 
+        ? `All logs for this project have been deleted` 
+        : 'All logs have been deleted')
+      
+      // Close dialog after a short delay
+      setTimeout(() => {
+        handleCloseDeleteAllDialog()
+      }, 1000)
+      
+    } catch (err) {
+      console.error('Error deleting all logs:', err)
+      setError('Failed to delete logs. Please try again.')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   // Render event logs table
   const renderEventLogsTable = () => (
     <Box>
@@ -477,6 +620,18 @@ const LogViewer = () => {
               Download Event Logs
             </Button>
           </Tooltip>
+          <Tooltip title="Delete all event logs">
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleOpenDeleteAllDialog}
+              size="small"
+              disabled={eventLogs.length === 0}
+            >
+              Delete All
+            </Button>
+          </Tooltip>
         </Stack>
       </Box>
       
@@ -487,8 +642,8 @@ const LogViewer = () => {
               <TableCell width="15%">Timestamp</TableCell>
               <TableCell width="10%">Level</TableCell>
               <TableCell width="15%">User ID</TableCell>
-              <TableCell width="45%">Message</TableCell>
-              <TableCell width="15%">Details</TableCell>
+              <TableCell width="40%">Message</TableCell>
+              <TableCell width="20%">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -517,14 +672,27 @@ const LogViewer = () => {
                         : log.message}
                     </TableCell>
                     <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => toggleRowExpand(log.id)}
-                        aria-expanded={expandedRows[log.id]}
-                        aria-label="show more"
-                      >
-                        {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                      </IconButton>
+                      <Box display="flex" alignItems="center">
+                        <IconButton
+                          size="small"
+                          onClick={() => toggleRowExpand(log.id)}
+                          aria-expanded={expandedRows[log.id]}
+                          aria-label="show more"
+                        >
+                          {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                        <Tooltip title="Delete log">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleOpenDeleteDialog(log.id, 'event')}
+                            aria-label="delete log"
+                            sx={{ ml: 1 }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -591,6 +759,18 @@ const LogViewer = () => {
               Download LLM Logs
             </Button>
           </Tooltip>
+          <Tooltip title="Delete all LLM logs">
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleOpenDeleteAllDialog}
+              size="small"
+              disabled={llmLogs.length === 0}
+            >
+              Delete All
+            </Button>
+          </Tooltip>
         </Stack>
       </Box>
       
@@ -601,8 +781,8 @@ const LogViewer = () => {
               <TableCell width="15%">Timestamp</TableCell>
               <TableCell width="15%">User ID</TableCell>
               <TableCell width="15%">Source</TableCell>
-              <TableCell width="40%">Query/Response</TableCell>
-              <TableCell width="15%">Details</TableCell>
+              <TableCell width="35%">Query/Response</TableCell>
+              <TableCell width="20%">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -625,14 +805,27 @@ const LogViewer = () => {
                         : log.query || 'No query'}
                     </TableCell>
                     <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => toggleRowExpand(log.id)}
-                        aria-expanded={expandedRows[log.id]}
-                        aria-label="show more"
-                      >
-                        {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                      </IconButton>
+                      <Box display="flex" alignItems="center">
+                        <IconButton
+                          size="small"
+                          onClick={() => toggleRowExpand(log.id)}
+                          aria-expanded={expandedRows[log.id]}
+                          aria-label="show more"
+                        >
+                          {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                        <Tooltip title="Delete log">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleOpenDeleteDialog(log.id, 'llm')}
+                            aria-label="delete log"
+                            sx={{ ml: 1 }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -696,28 +889,315 @@ const LogViewer = () => {
     </Box>
   )
 
+  // Mobile card view for event logs
+  const renderEventLogCards = () => (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap">
+        <Typography variant="h6" sx={{ mb: { xs: 1, sm: 0 } }}>Event Logs</Typography>
+        <Stack direction="row" spacing={1} sx={{ mb: { xs: 1, sm: 0 } }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadEventLogs}
+            size="small"
+            sx={{ minWidth: 40, height: 36 }}
+          >
+            {isMobile ? "" : "Download"}
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={handleOpenDeleteAllDialog}
+            size="small"
+            disabled={eventLogs.length === 0}
+            sx={{ minWidth: 40, height: 36 }}
+          >
+            {isMobile ? "" : "Delete All"}
+          </Button>
+        </Stack>
+      </Box>
+      
+      {eventLogs.length === 0 ? (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography>No logs found</Typography>
+        </Paper>
+      ) : (
+        <Stack spacing={2}>
+          {eventLogs.map((log) => (
+            <Card key={log.id} variant="outlined">
+              <CardContent sx={{ pb: 1 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Chip 
+                    label={log.level} 
+                    color={getLevelChipColor(log.level) as any} 
+                    size="small" 
+                    sx={{ mr: 1 }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {formatTimestamp(log.timestamp)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {log.message.length > 150 
+                    ? `${log.message.substring(0, 150)}...` 
+                    : log.message}
+                </Typography>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="caption" color="text.secondary">
+                    User: {log.user_id}
+                  </Typography>
+                </Box>
+              </CardContent>
+              <CardActions sx={{ pt: 0, justifyContent: 'flex-end' }}>
+                <IconButton
+                  size="small"
+                  onClick={() => toggleRowExpand(log.id)}
+                  aria-expanded={expandedRows[log.id]}
+                  aria-label="show more"
+                  sx={{ p: 1 }}
+                >
+                  {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleOpenDeleteDialog(log.id, 'event')}
+                  aria-label="delete log"
+                  sx={{ p: 1 }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </CardActions>
+              <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
+                <Divider />
+                <Box sx={{ p: 2 }}>
+                  <Tabs 
+                    value={tabValues[log.id] || 0} 
+                    onChange={(_e, val) => handleTabChange(log.id, val)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                  >
+                    <Tab label="Message" />
+                    <Tab label="Metadata" />
+                  </Tabs>
+                  
+                  <TabPanel value={tabValues[log.id] || 0} index={0}>
+                    <Typography variant="subtitle2" gutterBottom component="div">
+                      Full Message:
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                    >
+                      {log.message}
+                    </Paper>
+                  </TabPanel>
+                  
+                  <TabPanel value={tabValues[log.id] || 0} index={1}>
+                    <Typography variant="subtitle2" gutterBottom component="div">
+                      Metadata:
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap', overflowX: 'auto' }}
+                    >
+                      <pre style={{ margin: 0 }}>{formatMetadata(log.metadata)}</pre>
+                    </Paper>
+                  </TabPanel>
+                </Box>
+              </Collapse>
+            </Card>
+          ))}
+        </Stack>
+      )}
+    </Box>
+  )
+
+  // Mobile card view for LLM logs
+  const renderLlmLogCards = () => (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap">
+        <Typography variant="h6" sx={{ mb: { xs: 1, sm: 0 } }}>LLM Logs</Typography>
+        <Stack direction="row" spacing={1} sx={{ mb: { xs: 1, sm: 0 } }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadLlmLogs}
+            size="small"
+            sx={{ minWidth: 40, height: 36 }}
+          >
+            {isMobile ? "" : "Download"}
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={handleOpenDeleteAllDialog}
+            size="small"
+            disabled={llmLogs.length === 0}
+            sx={{ minWidth: 40, height: 36 }}
+          >
+            {isMobile ? "" : "Delete All"}
+          </Button>
+        </Stack>
+      </Box>
+      
+      {llmLogs.length === 0 ? (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography>No LLM logs found</Typography>
+        </Paper>
+      ) : (
+        <Stack spacing={2}>
+          {llmLogs.map((log) => (
+            <Card key={log.id} variant="outlined">
+              <CardContent sx={{ pb: 1 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Chip label={log.source} size="small" color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {formatTimestamp(log.timestamp)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {log.query && log.query.length > 150 
+                    ? `${log.query.substring(0, 150)}...` 
+                    : log.query || 'No query'}
+                </Typography>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="caption" color="text.secondary">
+                    User: {log.user_id}
+                  </Typography>
+                </Box>
+              </CardContent>
+              <CardActions sx={{ pt: 0, justifyContent: 'flex-end' }}>
+                <IconButton
+                  size="small"
+                  onClick={() => toggleRowExpand(log.id)}
+                  aria-expanded={expandedRows[log.id]}
+                  aria-label="show more"
+                  sx={{ p: 1 }}
+                >
+                  {expandedRows[log.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleOpenDeleteDialog(log.id, 'llm')}
+                  aria-label="delete log"
+                  sx={{ p: 1 }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </CardActions>
+              <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
+                <Divider />
+                <Box sx={{ p: 2 }}>
+                  <Tabs 
+                    value={tabValues[log.id] || 0} 
+                    onChange={(_e, val) => handleTabChange(log.id, val)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                  >
+                    <Tab label="Query" />
+                    <Tab label="Response" />
+                    <Tab label="Metadata" />
+                  </Tabs>
+                  
+                  <TabPanel value={tabValues[log.id] || 0} index={0}>
+                    <Typography variant="subtitle2" gutterBottom component="div">
+                      Full Query:
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap' }}
+                    >
+                      {log.query || 'No query provided'}
+                    </Paper>
+                  </TabPanel>
+                  
+                  <TabPanel value={tabValues[log.id] || 0} index={1}>
+                    <Typography variant="subtitle2" gutterBottom component="div">
+                      Full Response:
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap', overflowX: 'auto' }}
+                    >
+                      {log.response || 'No response provided'}
+                    </Paper>
+                  </TabPanel>
+                  
+                  <TabPanel value={tabValues[log.id] || 0} index={2}>
+                    <Typography variant="subtitle2" gutterBottom component="div">
+                      Metadata:
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{ p: 2, bgcolor: 'background.default', whiteSpace: 'pre-wrap', overflowX: 'auto' }}
+                    >
+                      <pre style={{ margin: 0 }}>{formatMetadata(log.metadata)}</pre>
+                    </Paper>
+                  </TabPanel>
+                </Box>
+              </Collapse>
+            </Card>
+          ))}
+        </Stack>
+      )}
+    </Box>
+  )
+
   return (
-    <Container maxWidth="xl">
-      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mt: 3 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', sm: 'center' }, 
+          mb: 3,
+          gap: 2
+        }}>
           <Box>
             {projectId && project ? (
               <>
-                <Breadcrumbs separator="›" aria-label="breadcrumb" sx={{ mb: 1 }}>
+                <Breadcrumbs 
+                  separator="›" 
+                  aria-label="breadcrumb" 
+                  sx={{ 
+                    mb: 1,
+                    '& .MuiBreadcrumbs-ol': {
+                      flexWrap: { xs: 'wrap', sm: 'nowrap' }
+                    }
+                  }}
+                >
                   <Link component={RouterLink} to="/logs" color="inherit">
                     All Logs
                   </Link>
-                  <Typography color="text.primary">{project.name}</Typography>
+                  <Typography color="text.primary" noWrap sx={{ maxWidth: { xs: '150px', sm: '300px' } }}>
+                    {project.name}
+                  </Typography>
                 </Breadcrumbs>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="h5" component="h1">Logs for Project: {project.name}</Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  gap: 1
+                }}>
+                  <Typography variant="h5" component="h1" noWrap sx={{ 
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                    maxWidth: { xs: '260px', sm: '500px' }
+                  }}>
+                    Logs for Project: {project.name}
+                  </Typography>
                   <Button
                     variant="text"
                     color="primary"
                     component={RouterLink}
                     to="/logs"
                     startIcon={<ArrowBackIcon />}
-                    sx={{ ml: 2 }}
+                    size={isMobile ? "small" : "medium"}
+                    sx={{ ml: { sm: 2 } }}
                   >
                     Back to All Logs
                   </Button>
@@ -729,39 +1209,54 @@ const LogViewer = () => {
                 )}
               </>
             ) : (
-              <Typography variant="h5" component="h1">Log Explorer</Typography>
+              <Typography variant="h5" component="h1" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+                Log Explorer
+              </Typography>
             )}
           </Box>
-          <Stack direction="row" spacing={2}>
+          <Stack 
+            direction={{ xs: 'row', sm: 'row' }} 
+            spacing={1}
+            sx={{ 
+              width: { xs: '100%', sm: 'auto' },
+              justifyContent: { xs: 'space-between', sm: 'flex-end' }
+            }}
+          >
             <Button
               variant="outlined"
               color="primary"
               startIcon={<BarChartIcon />}
               component={RouterLink}
               to={projectId ? `/analytics?project_id=${projectId}` : "/analytics"}
+              size={isMobile ? "small" : "medium"}
+              sx={{ minWidth: isMobile ? 40 : 'auto' }}
             >
-              View Analytics
+              {isMobile ? "" : "Analytics"}
             </Button>
             <Button
               variant="outlined"
               color="primary"
               startIcon={<RefreshIcon />}
               onClick={handleRefresh}
+              size={isMobile ? "small" : "medium"}
+              sx={{ minWidth: isMobile ? 40 : 'auto' }}
             >
-              Refresh
+              {isMobile ? "" : "Refresh"}
             </Button>
             <Button
               variant="outlined"
               color="primary"
               startIcon={<DownloadIcon />}
               onClick={handleDownloadAllLogs}
+              size={isMobile ? "small" : "medium"}
+              sx={{ minWidth: isMobile ? 40 : 'auto' }}
             >
-              Download All
+              {isMobile ? "" : "Download All"}
             </Button>
           </Stack>
         </Box>
 
-        <Paper sx={{ p: 3, mb: 4 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={5}>
               <TextField
@@ -771,9 +1266,10 @@ const LogViewer = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                size={isMobile ? "small" : "medium"}
                 InputProps={{
                   endAdornment: (
-                    <IconButton onClick={handleSearch}>
+                    <IconButton onClick={handleSearch} size={isMobile ? "small" : "medium"}>
                       <SearchIcon />
                     </IconButton>
                   ),
@@ -789,6 +1285,7 @@ const LogViewer = () => {
                   value={levelFilter}
                   onChange={handleLevelFilterChange}
                   variant="outlined"
+                  size={isMobile ? "small" : "medium"}
                 >
                   <MenuItem value="all">All Levels</MenuItem>
                   <MenuItem value="info">Info</MenuItem>
@@ -804,7 +1301,16 @@ const LogViewer = () => {
                 variant="outlined"
                 startIcon={<RefreshIcon />}
                 onClick={handleRefresh}
-                sx={{ backgroundColor: '#008374', color: 'white', '&:hover': { backgroundColor: 'white', color: '#008374' } }}
+                sx={{ 
+                  backgroundColor: '#008374', 
+                  color: 'white', 
+                  '&:hover': { 
+                    backgroundColor: 'white', 
+                    color: '#008374' 
+                  },
+                  height: { xs: 40, md: 'auto' }
+                }}
+                size={isMobile ? "small" : "medium"}
               >
                 Refresh
               </Button>
@@ -813,18 +1319,22 @@ const LogViewer = () => {
         </Paper>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={activeLogTab} onChange={handleLogTabChange}>
+          <Tabs 
+            value={activeLogTab} 
+            onChange={handleLogTabChange}
+            variant={isMobile ? "fullWidth" : "standard"}
+          >
             <Tab label="Event Logs" />
             <Tab label="LLM Logs" />
           </Tabs>
         </Box>
 
         <TabPanel value={activeLogTab} index={0}>
-          {renderEventLogsTable()}
+          {isMobile ? renderEventLogCards() : renderEventLogsTable()}
         </TabPanel>
 
         <TabPanel value={activeLogTab} index={1}>
-          {renderLlmLogsTable()}
+          {isMobile ? renderLlmLogCards() : renderLlmLogsTable()}
         </TabPanel>
 
         {(eventLogs.length > 0 || llmLogs.length > 0) && (
@@ -834,10 +1344,103 @@ const LogViewer = () => {
               page={page}
               onChange={handlePageChange}
               color="primary"
-              size="large"
+              size={isMobile ? "medium" : "large"}
+              siblingCount={isMobile ? 0 : 1}
             />
           </Box>
         )}
+
+        {/* Delete Single Log Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleCloseDeleteDialog}
+          aria-labelledby="delete-log-dialog-title"
+        >
+          <DialogTitle id="delete-log-dialog-title">
+            {deleteSuccess ? 'Success' : 'Delete Log'}
+          </DialogTitle>
+          <DialogContent>
+            {deleteSuccess ? (
+              <DialogContentText color="success.main">
+                {deleteSuccess}
+              </DialogContentText>
+            ) : (
+              <DialogContentText>
+                Are you sure you want to delete this log? This action cannot be undone.
+              </DialogContentText>
+            )}
+          </DialogContent>
+          <DialogActions>
+            {!deleteSuccess && (
+              <>
+                <Button onClick={handleCloseDeleteDialog} disabled={deleteLoading}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleDeleteLog} 
+                  color="error" 
+                  disabled={deleteLoading}
+                  startIcon={deleteLoading ? <RefreshIcon /> : <DeleteIcon />}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
+                </Button>
+              </>
+            )}
+            {deleteSuccess && (
+              <Button onClick={handleCloseDeleteDialog} autoFocus>
+                Close
+              </Button>
+            )}
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete All Logs Dialog */}
+        <Dialog
+          open={deleteAllDialogOpen}
+          onClose={handleCloseDeleteAllDialog}
+          aria-labelledby="delete-all-logs-dialog-title"
+        >
+          <DialogTitle id="delete-all-logs-dialog-title">
+            {deleteSuccess ? 'Success' : 'Delete All Logs'}
+          </DialogTitle>
+          <DialogContent>
+            {deleteSuccess ? (
+              <DialogContentText color="success.main">
+                {deleteSuccess}
+              </DialogContentText>
+            ) : (
+              <DialogContentText>
+                {projectId ? (
+                  <>Are you sure you want to delete all logs from this project? This action cannot be undone.</>
+                ) : (
+                  <>Are you sure you want to delete all {activeLogTab === 0 ? 'event' : 'LLM'} logs? This action cannot be undone.</>
+                )}
+              </DialogContentText>
+            )}
+          </DialogContent>
+          <DialogActions>
+            {!deleteSuccess && (
+              <>
+                <Button onClick={handleCloseDeleteAllDialog} disabled={deleteLoading}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleDeleteAllLogs} 
+                  color="error" 
+                  disabled={deleteLoading}
+                  startIcon={deleteLoading ? <RefreshIcon /> : <DeleteIcon />}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete All'}
+                </Button>
+              </>
+            )}
+            {deleteSuccess && (
+              <Button onClick={handleCloseDeleteAllDialog} autoFocus>
+                Close
+              </Button>
+            )}
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Container>
   )
