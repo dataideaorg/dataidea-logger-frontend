@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react'
-import { HashRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { jwtDecode } from 'jwt-decode'
