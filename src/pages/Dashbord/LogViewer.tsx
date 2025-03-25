@@ -46,8 +46,8 @@ import DownloadIcon from '@mui/icons-material/Download'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import DeleteIcon from '@mui/icons-material/Delete'
-import InfoIcon from '@mui/icons-material/Info'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
+// import InfoIcon from '@mui/icons-material/Info'
+// import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { API_URL } from '../../api/endpoints'
 
 // Common interface for shared properties
