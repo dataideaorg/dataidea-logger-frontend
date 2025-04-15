@@ -1069,15 +1069,16 @@ const Dashboard = () => {
                             border: `1px solid ${alpha(primaryColor, 0.1)}`,
                           }}
                         >
-                          {`curl -X POST http://localhost:8000/api/event-log/ \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "api_key": "your-api-key", 
-    "user_id": "user123",
-    "message": "User interaction logged",
-    "level": "info",
-    "metadata": {"session_id": "abc123"}
-  }'`}
+                          {`from dataidea.logger import event_log
+
+event_log({
+        'api_key': api_key,
+        'project_name': 'Test Project',
+        'user_id': '1234567890', # optional
+        'message': 'This is a test message',
+        'level': 'info',
+        'metadata': {'test': 'test'} # optional
+    })`}
                         </Box>
                       </CardContent>
                     </Card>
