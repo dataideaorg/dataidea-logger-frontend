@@ -1055,7 +1055,7 @@ const Dashboard = () => {
                           </Typography>
                         </Box>
                         <Typography variant="body2" color="text.secondary">
-                          Use your API key to send logs to our service. Here's an example using curl:
+                          Use your API key to send logs to our service. Here's an example using python:
                         </Typography>
                         <Box
                           component="pre"
