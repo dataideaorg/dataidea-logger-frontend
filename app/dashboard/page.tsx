@@ -1,20 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-import { analyticsAPI, userAPI } from '@/services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-const COLORS = ['#ffffff', '#9ca3af', '#6b7280', '#4b5563', '#374151', '#1f2937'];
+import { userAPI, projectsAPI } from '@/services/api';
 
 export default function DashboardPage() {
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ['analytics'],
-    queryFn: async () => {
-      const response = await analyticsAPI.get();
-      return response.data;
-    },
-  });
+  const [activeEventTab, setActiveEventTab] = useState<'dataidea' | 'python' | 'javascript'>('dataidea');
+  const [activeLLMTab, setActiveLLMTab] = useState<'dataidea' | 'python' | 'javascript'>('dataidea');
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['user-stats'],
@@ -24,179 +18,380 @@ export default function DashboardPage() {
     },
   });
 
-  if (analyticsLoading || statsLoading) {
+  const { data: projects, isLoading: projectsLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const response = await projectsAPI.list();
+      return response.data;
+    },
+  });
+
+  if (statsLoading || projectsLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-400">Loading...</div>
+          <div className="text-[#a5a5a5]">Loading...</div>
         </div>
       </DashboardLayout>
     );
   }
 
-  const monthlyData = analytics?.monthly_logs || [];
-  const llmSources = analytics?.llm_sources || [];
-  const logLevels = analytics?.log_levels || [];
-  const projects = analytics?.projects || [];
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400 mt-2">Overview of your logging activity</p>
+          <h1 className="text-3xl font-bold text-[#e5e5e5]">Dashboard</h1>
+          <p className="text-[#a5a5a5] mt-2">Overview of your logging activity</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-3xl">📝</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total Event Logs</p>
-                <p className="text-2xl font-semibold text-white">{stats?.total_event_logs || 0}</p>
+                <p className="text-sm font-medium text-[#a5a5a5]">Total Event Logs</p>
+                <p className="text-2xl font-semibold text-[#e5e5e5]">{stats?.total_event_logs || 0}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-3xl">🤖</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total LLM Logs</p>
-                <p className="text-2xl font-semibold text-white">{stats?.total_llm_logs || 0}</p>
+                <p className="text-sm font-medium text-[#a5a5a5]">Total LLM Logs</p>
+                <p className="text-2xl font-semibold text-[#e5e5e5]">{stats?.total_llm_logs || 0}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-3xl">📁</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Active Projects</p>
-                <p className="text-2xl font-semibold text-white">{stats?.total_projects || 0}</p>
+                <p className="text-sm font-medium text-[#a5a5a5]">Active Projects</p>
+                <p className="text-2xl font-semibold text-[#e5e5e5]">{projects?.length || 0}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-3xl">🔑</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">API Keys</p>
-                <p className="text-2xl font-semibold text-white">{stats?.total_api_keys || 0}</p>
+                <p className="text-sm font-medium text-[#a5a5a5]">API Keys</p>
+                <p className="text-2xl font-semibold text-[#e5e5e5]">{stats?.api_keys_count || 0}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Monthly Logs Chart */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Monthly Logs</h2>
-            {monthlyData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                    labelStyle={{ color: '#ffffff' }}
-                  />
-                  <Legend />
-                  <Bar dataKey="eventCount" name="Event Logs" fill="#ffffff" />
-                  <Bar dataKey="llmCount" name="LLM Logs" fill="#6b7280" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                No data available
-              </div>
-            )}
+        {/* Recent Projects */}
+        <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-[#e5e5e5]">Recent Projects</h2>
+            <Link href="/projects" className="text-sm text-[#a5a5a5] hover:text-[#e5e5e5]">
+              View all →
+            </Link>
           </div>
-
-          {/* LLM Sources Pie Chart */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">LLM Sources</h2>
-            {llmSources.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={llmSources}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name}: ${entry.value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {llmSources.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                No LLM logs yet
-              </div>
-            )}
-          </div>
-
-          {/* Log Levels */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Log Levels</h2>
-            {logLevels.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={logLevels}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="level" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                    labelStyle={{ color: '#ffffff' }}
-                  />
-                  <Bar dataKey="count" fill="#9ca3af" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                No data available
-              </div>
-            )}
-          </div>
-
-          {/* Top Projects */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Top Projects</h2>
-            {projects.length > 0 ? (
-              <div className="space-y-3">
-                {projects.slice(0, 5).map((project: any) => (
-                  <div key={project.id} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
-                    <span className="text-sm font-medium text-white">{project.name}</span>
-                    <span className="text-sm text-gray-400">{project.count} logs</span>
+          {projects && projects.length > 0 ? (
+            <div className="space-y-3">
+              {projects.slice(0, 5).map((project: any) => (
+                <Link
+                  key={project.id}
+                  href={`/analytics?project=${project.id}`}
+                  className="flex items-center justify-between py-3 px-4 border border-[#3a3a3a] rounded-md hover:bg-[#3a3a3a] transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-[#e5e5e5]">{project.name}</p>
+                    <p className="text-xs text-[#a5a5a5] capitalize">{project.project_type} project</p>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-[#e5e5e5]">{project.log_count || 0}</p>
+                    <p className="text-xs text-[#a5a5a5]">total logs</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-[#a5a5a5]">
+              No projects yet. <Link href="/projects" className="text-[#e5e5e5] hover:underline">Create one</Link> to get started!
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Link href="/analytics" className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 hover:bg-[#3a3a3a] transition-colors">
+            <div className="flex items-center">
+              <span className="text-3xl mr-4">📈</span>
+              <div>
+                <h3 className="font-semibold text-[#e5e5e5]">View Analytics</h3>
+                <p className="text-sm text-[#a5a5a5]">Detailed project insights</p>
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                No projects yet
+            </div>
+          </Link>
+
+          <Link href="/projects" className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 hover:bg-[#3a3a3a] transition-colors">
+            <div className="flex items-center">
+              <span className="text-3xl mr-4">📁</span>
+              <div>
+                <h3 className="font-semibold text-[#e5e5e5]">Manage Projects</h3>
+                <p className="text-sm text-[#a5a5a5]">Create and organize</p>
               </div>
-            )}
+            </div>
+          </Link>
+
+          <Link href="/api-keys" className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 hover:bg-[#3a3a3a] transition-colors">
+            <div className="flex items-center">
+              <span className="text-3xl mr-4">🔑</span>
+              <div>
+                <h3 className="font-semibold text-[#e5e5e5]">API Keys</h3>
+                <p className="text-sm text-[#a5a5a5]">Generate new keys</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Integration Guide */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-[#e5e5e5]">How to Send Logs</h2>
+          <p className="text-sm text-[#a5a5a5]">
+            Integrate logging into your application using one of these methods.{' '}
+            <strong className="text-[#e5e5e5]">Note:</strong> Make sure to create an API key from the{' '}
+            <Link href="/api-keys" className="text-[#e5e5e5] hover:underline">API Keys</Link> page first.
+          </p>
+
+          {/* Event/Activity Logs Section */}
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-[#e5e5e5] mb-4">Event / Activity Logs</h3>
+
+            {/* Event Tabs */}
+            <div className="flex space-x-2 mb-4 border-b border-[#3a3a3a]">
+              <button
+                onClick={() => setActiveEventTab('dataidea')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeEventTab === 'dataidea'
+                    ? 'text-[#e5e5e5] border-b-2 border-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:text-[#c5c5c5]'
+                }`}
+              >
+                DATAIDEA Python Package
+              </button>
+              <button
+                onClick={() => setActiveEventTab('python')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeEventTab === 'python'
+                    ? 'text-[#e5e5e5] border-b-2 border-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:text-[#c5c5c5]'
+                }`}
+              >
+                Python
+              </button>
+              <button
+                onClick={() => setActiveEventTab('javascript')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeEventTab === 'javascript'
+                    ? 'text-[#e5e5e5] border-b-2 border-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:text-[#c5c5c5]'
+                }`}
+              >
+                JavaScript
+              </button>
+            </div>
+
+            {/* Event Code Examples */}
+            <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-md p-4 overflow-x-auto">
+              {activeEventTab === 'dataidea' && (
+                <pre className="text-sm text-[#e5e5e5]">
+                  <code>{`import os
+
+api_key = os.getenv('DATAIDEA_API_KEY')
+
+from dataidea import event_log
+
+event_log({
+    'api_key': api_key,
+    'project_name': 'Test Project',
+    'user_id': '1234567890',  # optional
+    'message': 'This is a test message',
+    'level': 'info',  # info, warning, error, debug
+    'metadata': {'test': 'test'}  # optional
+})`}</code>
+                </pre>
+              )}
+
+              {activeEventTab === 'python' && (
+                <pre className="text-sm text-[#e5e5e5]">
+                  <code>{`import requests
+import os
+
+api_key = os.getenv('DATAIDEA_API_KEY')
+
+response = requests.post(
+    'https://logger.api.dataidea.org/api/event-logs/',
+    headers={'Authorization': f'Api-Key {api_key}'},
+    json={
+        'project_name': 'Test Project',
+        'user_id': '1234567890',  # optional
+        'message': 'This is a test message',
+        'level': 'info',  # info, warning, error, debug
+        'metadata': {'test': 'test'}  # optional
+    }
+)`}</code>
+                </pre>
+              )}
+
+              {activeEventTab === 'javascript' && (
+                <pre className="text-sm text-[#e5e5e5]">
+                  <code>{`const apiKey = process.env.DATAIDEA_API_KEY;
+
+const response = await fetch(
+  'https://logger.api.dataidea.org/api/event-logs/',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': \`Api-Key \${apiKey}\`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      project_name: 'Test Project',
+      user_id: '1234567890',  // optional
+      message: 'This is a test message',
+      level: 'info',  // info, warning, error, debug
+      metadata: { test: 'test' }  // optional
+    })
+  }
+);`}</code>
+                </pre>
+              )}
+            </div>
+
+            <div className="mt-3 text-sm text-[#a5a5a5]">
+              <strong className="text-[#e5e5e5]">Log Levels:</strong> info, warning, error, debug
+            </div>
+          </div>
+
+          {/* LLM Logs Section */}
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-[#e5e5e5] mb-4">LLM Logs</h3>
+
+            {/* LLM Tabs */}
+            <div className="flex space-x-2 mb-4 border-b border-[#3a3a3a]">
+              <button
+                onClick={() => setActiveLLMTab('dataidea')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeLLMTab === 'dataidea'
+                    ? 'text-[#e5e5e5] border-b-2 border-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:text-[#c5c5c5]'
+                }`}
+              >
+                DATAIDEA Python Package
+              </button>
+              <button
+                onClick={() => setActiveLLMTab('python')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeLLMTab === 'python'
+                    ? 'text-[#e5e5e5] border-b-2 border-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:text-[#c5c5c5]'
+                }`}
+              >
+                Python
+              </button>
+              <button
+                onClick={() => setActiveLLMTab('javascript')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeLLMTab === 'javascript'
+                    ? 'text-[#e5e5e5] border-b-2 border-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:text-[#c5c5c5]'
+                }`}
+              >
+                JavaScript
+              </button>
+            </div>
+
+            {/* LLM Code Examples */}
+            <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-md p-4 overflow-x-auto">
+              {activeLLMTab === 'dataidea' && (
+                <pre className="text-sm text-[#e5e5e5]">
+                  <code>{`import os
+
+api_key = os.getenv('DATAIDEA_API_KEY')
+
+from dataidea import llm_log
+
+llm_log({
+    'api_key': api_key,
+    'project_name': 'Test Project',
+    'user_id': '1234567890',  # optional
+    'source': 'gpt-4o',
+    'query': 'This is a test query',
+    'response': 'This is a test response',
+    'metadata': {'extra': 'extra info'}  # optional
+})`}</code>
+                </pre>
+              )}
+
+              {activeLLMTab === 'python' && (
+                <pre className="text-sm text-[#e5e5e5]">
+                  <code>{`import requests
+import os
+
+api_key = os.getenv('DATAIDEA_API_KEY')
+
+response = requests.post(
+    'https://logger.api.dataidea.org/api/llm-logs/',
+    headers={'Authorization': f'Api-Key {api_key}'},
+    json={
+        'project_name': 'Test Project',
+        'user_id': '1234567890',  # optional
+        'source': 'gpt-4o',
+        'query': 'This is a test query',
+        'response': 'This is a test response',
+        'metadata': {'extra': 'extra info'}  # optional
+    }
+)`}</code>
+                </pre>
+              )}
+
+              {activeLLMTab === 'javascript' && (
+                <pre className="text-sm text-[#e5e5e5]">
+                  <code>{`const apiKey = process.env.DATAIDEA_API_KEY;
+
+const response = await fetch(
+  'https://logger.api.dataidea.org/api/llm-logs/',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': \`Api-Key \${apiKey}\`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      project_name: 'Test Project',
+      user_id: '1234567890',  // optional
+      source: 'gpt-4o',
+      query: 'This is a test query',
+      response: 'This is a test response',
+      metadata: { extra: 'extra info' }  // optional
+    })
+  }
+);`}</code>
+                </pre>
+              )}
+            </div>
+
+            <div className="mt-3 text-sm text-[#a5a5a5]">
+              <strong className="text-[#e5e5e5]">Common Sources:</strong> gpt-4o, gpt-4, claude-3, gemini, etc.
+            </div>
           </div>
         </div>
       </div>

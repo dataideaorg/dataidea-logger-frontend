@@ -53,18 +53,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#1a1a1a] px-4">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-white">
-            DataIdea Logger
+          <h2 className="mt-6 text-center text-3xl font-bold text-[#e5e5e5]">
+            DATAIDEA Logger
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+          <p className="mt-2 text-center text-sm text-[#a5a5a5]">
             Sign in to your account
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 bg-gray-900 p-8 rounded-lg" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 bg-[#2a2a2a] p-8 rounded-lg" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-md bg-red-900/50 border border-red-700 p-4">
               <p className="text-sm text-red-200">{error}</p>
@@ -73,7 +73,7 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="username" className="block text-sm font-medium text-[#c5c5c5]">
                 Username
               </label>
               <input
@@ -83,12 +83,12 @@ export default function LoginPage() {
                 required
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 bg-black border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                className="mt-1 block w-full px-3 py-2 bg-[#1a1a1a] border border-[#3a3a3a] rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-[#c5c5c5]">
                 Password
               </label>
               <input
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 bg-black border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                className="mt-1 block w-full px-3 py-2 bg-[#1a1a1a] border border-[#3a3a3a] rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
               />
             </div>
           </div>
@@ -115,10 +115,10 @@ export default function LoginPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700" />
+              <div className="w-full border-t border-[#3a3a3a]" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or continue with</span>
+              <span className="px-2 bg-[#2a2a2a] text-[#a5a5a5]">Or continue with</span>
             </div>
           </div>
 
@@ -126,7 +126,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full flex justify-center items-center py-2 px-4 border border-gray-700 rounded-md text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+              className="w-full flex justify-center items-center py-2 px-4 border border-[#3a3a3a] rounded-md text-sm font-medium text-[#e5e5e5] bg-[#1a1a1a] hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
@@ -139,9 +139,9 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#a5a5a5]">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="font-medium text-white hover:text-gray-300">
+              <Link href="/register" className="font-medium text-[#e5e5e5] hover:text-[#c5c5c5]">
                 Sign up
               </Link>
             </p>

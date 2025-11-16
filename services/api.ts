@@ -11,8 +11,8 @@ export const authAPI = {
   getCurrentUser: () =>
     axios.get('/auth/user/'),
 
-  updateProfile: (data: { username?: string; email?: string; password?: string }) =>
-    axios.put('/auth/user/profile/', data),
+  updateProfile: (data: { username?: string; email?: string; current_password?: string; new_password?: string }) =>
+    axios.patch('/auth/user/profile/', data),
 
   googleLogin: () =>
     axios.get('/auth/google/login/'),
@@ -110,13 +110,13 @@ export const userAPI = {
   getNotificationPreferences: () =>
     axios.get('/email-notifications/'),
 
-  updateNotificationPreferences: (data: {
+  updateNotificationPreferences: (id: number, data: {
     email?: string;
     enabled?: boolean;
     notify_on_error?: boolean;
     notify_on_warning?: boolean;
   }) =>
-    axios.put('/email-notifications/', data),
+    axios.patch(`/email-notifications/${id}/`, data),
 };
 
 // Bulk Operations API

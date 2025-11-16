@@ -44,7 +44,7 @@ function GoogleCallbackContent() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="text-white text-xl">Completing Google sign-in...</div>
+          <div className="text-[#e5e5e5] text-xl">Completing Google sign-in...</div>
           <div className="text-gray-400">Please wait</div>
         </div>
       )}
@@ -54,10 +54,10 @@ function GoogleCallbackContent() {
 
 export default function GoogleCallbackPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
+    <div className="min-h-screen flex items-center justify-center bg-[#1a1a1a]">
       <Suspense fallback={
         <div className="text-center">
-          <div className="text-white text-xl">Loading...</div>
+          <div className="text-[#e5e5e5] text-xl">Loading...</div>
         </div>
       }>
         <GoogleCallbackContent />

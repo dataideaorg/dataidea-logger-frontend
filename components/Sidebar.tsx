@@ -6,9 +6,9 @@ import { useAuthStore } from '@/store/authStore';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊' },
+  { name: 'Analytics', href: '/analytics', icon: '📈' },
+  { name: 'Logs', href: '/logs', icon: '📝' },
   { name: 'Projects', href: '/projects', icon: '📁' },
-  { name: 'Event Logs', href: '/event-logs', icon: '📝' },
-  { name: 'LLM Logs', href: '/llm-logs', icon: '🤖' },
   { name: 'API Keys', href: '/api-keys', icon: '🔑' },
   { name: 'Settings', href: '/settings', icon: '⚙️' },
 ];
@@ -24,9 +24,9 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-black border-r border-gray-800">
-      <div className="flex h-16 items-center px-6 border-b border-gray-800">
-        <h1 className="text-xl font-bold text-white">DataIdea Logger</h1>
+    <div className="flex h-screen w-64 flex-col bg-[#1a1a1a] border-r border-[#3a3a3a]">
+      <div className="flex h-16 items-center px-6 border-b border-[#3a3a3a]">
+        <h1 className="text-xl font-bold text-[#e5e5e5]">DATAIDEA Logger</h1>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -40,8 +40,8 @@ export default function Sidebar() {
                 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
                 ${
                   isActive
-                    ? 'bg-white text-black'
-                    : 'text-gray-300 hover:bg-gray-900 hover:text-white'
+                    ? 'bg-[#3a3a3a] text-[#e5e5e5]'
+                    : 'text-[#a5a5a5] hover:bg-[#2a2a2a] hover:text-[#e5e5e5]'
                 }
               `}
             >
@@ -52,16 +52,16 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-gray-800 p-4">
+      <div className="border-t border-[#3a3a3a] p-4">
         <div className="flex items-center mb-4">
           <div className="flex-1">
-            <p className="text-sm font-medium text-white">{user?.username}</p>
-            <p className="text-xs text-gray-400">{user?.email}</p>
+            <p className="text-sm font-medium text-[#e5e5e5]">{user?.username}</p>
+            <p className="text-xs text-[#a5a5a5]">{user?.email}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors"
+          className="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-[#1a1a1a] bg-[#e5e5e5] rounded-md hover:bg-[#c5c5c5] transition-colors"
         >
           Logout
         </button>

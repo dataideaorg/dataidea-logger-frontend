@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-gray-950">
+      <div className="flex h-screen bg-[#1a1a1a]">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
           <div className="p-8">

@@ -78,12 +78,12 @@ export default function ApiKeysPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">API Keys</h1>
-            <p className="text-gray-400 mt-2">Manage your API keys for logging</p>
+            <h1 className="text-3xl font-bold text-[#e5e5e5]">API Keys</h1>
+            <p className="text-[#a5a5a5] mt-2">Manage your API keys for logging</p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-white text-black rounded-md hover:bg-gray-200 font-medium transition-colors"
+            className="px-4 py-2 bg-[#e5e5e5] text-[#1a1a1a] rounded-md hover:bg-[#c5c5c5] font-medium transition-colors"
           >
             Create API Key
           </button>
@@ -91,47 +91,47 @@ export default function ApiKeysPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-400">Loading...</div>
+            <div className="text-[#a5a5a5]">Loading...</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {apiKeys?.map((apiKey: ApiKey) => (
-              <div key={apiKey.id} className="bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors">
+              <div key={apiKey.id} className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 hover:border-gray-700 transition-colors">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-white">{apiKey.name}</h3>
+                      <h3 className="text-lg font-semibold text-[#e5e5e5]">{apiKey.name}</h3>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        apiKey.is_active ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'
+                        apiKey.is_active ? 'bg-[#e5e5e5] text-[#1a1a1a]' : 'bg-[#2a2a2a] text-[#a5a5a5]'
                       }`}>
                         {apiKey.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2 mb-2">
-                      <code className="text-sm text-gray-300 bg-black border border-gray-800 px-3 py-1 rounded font-mono">
+                      <code className="text-sm text-[#c5c5c5] bg-[#1a1a1a] border border-[#3a3a3a] px-3 py-1 rounded font-mono">
                         {apiKey.key}
                       </code>
                       <button
                         onClick={() => handleCopy(apiKey.key)}
-                        className="px-3 py-1 text-xs bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                        className="px-3 py-1 text-xs bg-[#2a2a2a] text-[#e5e5e5] rounded hover:bg-[#3a3a3a] transition-colors"
                       >
                         {copiedKey === apiKey.key ? 'Copied!' : 'Copy'}
                       </button>
                     </div>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-[#a5a5a5]">
                       Created: {format(new Date(apiKey.created_at), 'PPpp')}
                     </p>
                   </div>
                   <div className="flex space-x-2 ml-4">
                     <button
                       onClick={() => handleToggleActive(apiKey.id, apiKey.is_active)}
-                      className="px-3 py-2 text-sm bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors"
+                      className="px-3 py-2 text-sm bg-[#2a2a2a] text-[#e5e5e5] rounded-md hover:bg-[#3a3a3a] transition-colors"
                     >
                       {apiKey.is_active ? 'Deactivate' : 'Activate'}
                     </button>
                     <button
                       onClick={() => handleDelete(apiKey.id)}
-                      className="px-3 py-2 text-sm bg-black border border-gray-800 text-white rounded-md hover:border-gray-700 transition-colors"
+                      className="px-3 py-2 text-sm bg-[#1a1a1a] border border-[#3a3a3a] text-[#e5e5e5] rounded-md hover:border-gray-700 transition-colors"
                     >
                       Delete
                     </button>
@@ -143,21 +143,21 @@ export default function ApiKeysPage() {
         )}
 
         {!isLoading && apiKeys?.length === 0 && (
-          <div className="text-center py-12 bg-gray-900 border border-gray-800 rounded-lg">
-            <p className="text-gray-400">No API keys yet. Create your first API key to get started!</p>
+          <div className="text-center py-12 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg">
+            <p className="text-[#a5a5a5]">No API keys yet. Create your first API key to get started!</p>
           </div>
         )}
       </div>
 
       {/* Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-white mb-4">Create API Key</h2>
+        <div className="fixed inset-0 bg-[#1a1a1a] bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-[#e5e5e5] mb-4">Create API Key</h2>
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-[#c5c5c5] mb-1">
                   Name
                 </label>
                 <input
@@ -166,7 +166,7 @@ export default function ApiKeysPage() {
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
                   placeholder="My API Key"
-                  className="w-full px-3 py-2 bg-black border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
                 />
               </div>
 
@@ -177,14 +177,14 @@ export default function ApiKeysPage() {
                     setShowModal(false);
                     setNewKeyName('');
                   }}
-                  className="flex-1 px-4 py-2 bg-black border border-gray-700 text-white rounded-md hover:border-gray-600 transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-gray-700 text-[#e5e5e5] rounded-md hover:border-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-white text-black rounded-md hover:bg-gray-200 disabled:opacity-50 font-medium transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#e5e5e5] text-[#1a1a1a] rounded-md hover:bg-[#c5c5c5] disabled:opacity-50 font-medium transition-colors"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create'}
                 </button>

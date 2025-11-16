@@ -104,8 +104,8 @@ export default function ProjectsPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">Projects</h1>
-            <p className="text-gray-400 mt-2">Manage your logging projects</p>
+            <h1 className="text-3xl font-bold text-[#e5e5e5]">Projects</h1>
+            <p className="text-[#a5a5a5] mt-2">Manage your logging projects</p>
           </div>
           <button
             onClick={() => {
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
               resetForm();
               setShowModal(true);
             }}
-            className="px-4 py-2 bg-white text-black rounded-md hover:bg-gray-200 font-medium transition-colors"
+            className="px-4 py-2 bg-[#e5e5e5] text-[#1a1a1a] rounded-md hover:bg-[#c5c5c5] font-medium transition-colors"
           >
             Create Project
           </button>
@@ -121,55 +121,55 @@ export default function ProjectsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-400">Loading...</div>
+            <div className="text-[#a5a5a5]">Loading...</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects?.map((project: Project) => (
-              <div key={project.id} className="bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors">
+              <div key={project.id} className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 hover:border-gray-700 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{project.name}</h3>
-                    <span className="inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-800 text-gray-300">
+                    <h3 className="text-lg font-semibold text-[#e5e5e5]">{project.name}</h3>
+                    <span className="inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full bg-[#2a2a2a] text-[#c5c5c5]">
                       {project.project_type}
                     </span>
                   </div>
                   <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                    project.is_active ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'
+                    project.is_active ? 'bg-[#e5e5e5] text-[#1a1a1a]' : 'bg-[#2a2a2a] text-[#a5a5a5]'
                   }`}>
                     {project.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
 
                 {project.description && (
-                  <p className="text-sm text-gray-400 mb-4">{project.description}</p>
+                  <p className="text-sm text-[#a5a5a5] mb-4">{project.description}</p>
                 )}
 
-                <div className="space-y-2 mb-4 border-t border-gray-800 pt-4">
+                <div className="space-y-2 mb-4 border-t border-[#3a3a3a] pt-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Event Logs:</span>
-                    <span className="font-medium text-white">{project.event_log_count || 0}</span>
+                    <span className="text-[#a5a5a5]">Event Logs:</span>
+                    <span className="font-medium text-[#e5e5e5]">{project.event_log_count || 0}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">LLM Logs:</span>
-                    <span className="font-medium text-white">{project.llm_log_count || 0}</span>
+                    <span className="text-[#a5a5a5]">LLM Logs:</span>
+                    <span className="font-medium text-[#e5e5e5]">{project.llm_log_count || 0}</span>
                   </div>
-                  <div className="flex justify-between text-sm border-t border-gray-800 pt-2">
-                    <span className="text-gray-400">Total Logs:</span>
-                    <span className="font-semibold text-white">{project.log_count || 0}</span>
+                  <div className="flex justify-between text-sm border-t border-[#3a3a3a] pt-2">
+                    <span className="text-[#a5a5a5]">Total Logs:</span>
+                    <span className="font-semibold text-[#e5e5e5]">{project.log_count || 0}</span>
                   </div>
                 </div>
 
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEdit(project)}
-                    className="flex-1 px-3 py-2 text-sm bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors"
+                    className="flex-1 px-3 py-2 text-sm bg-[#2a2a2a] text-[#e5e5e5] rounded-md hover:bg-[#3a3a3a] transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(project.id)}
-                    className="flex-1 px-3 py-2 text-sm bg-black border border-gray-800 text-white rounded-md hover:border-gray-700 transition-colors"
+                    className="flex-1 px-3 py-2 text-sm bg-[#1a1a1a] border border-[#3a3a3a] text-[#e5e5e5] rounded-md hover:border-gray-700 transition-colors"
                   >
                     Delete
                   </button>
@@ -180,23 +180,23 @@ export default function ProjectsPage() {
         )}
 
         {!isLoading && projects?.length === 0 && (
-          <div className="text-center py-12 bg-gray-900 border border-gray-800 rounded-lg">
-            <p className="text-gray-400">No projects yet. Create your first project to get started!</p>
+          <div className="text-center py-12 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg">
+            <p className="text-[#a5a5a5]">No projects yet. Create your first project to get started!</p>
           </div>
         )}
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-white mb-4">
+        <div className="fixed inset-0 bg-[#1a1a1a] bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-[#e5e5e5] mb-4">
               {editingProject ? 'Edit Project' : 'Create Project'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-[#c5c5c5] mb-1">
                   Name
                 </label>
                 <input
@@ -204,30 +204,30 @@ export default function ProjectsPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-black border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-[#c5c5c5] mb-1">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 bg-black border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-[#c5c5c5] mb-1">
                   Type
                 </label>
                 <select
                   value={formData.project_type}
                   onChange={(e) => setFormData({ ...formData, project_type: e.target.value as 'activity' | 'llm' })}
-                  className="w-full px-3 py-2 bg-black border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
                 >
                   <option value="activity">Activity</option>
                   <option value="llm">LLM</option>
@@ -242,14 +242,14 @@ export default function ProjectsPage() {
                     setEditingProject(null);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 bg-black border border-gray-700 text-white rounded-md hover:border-gray-600 transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-gray-700 text-[#e5e5e5] rounded-md hover:border-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-white text-black rounded-md hover:bg-gray-200 disabled:opacity-50 font-medium transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#e5e5e5] text-[#1a1a1a] rounded-md hover:bg-[#c5c5c5] disabled:opacity-50 font-medium transition-colors"
                 >
                   {createMutation.isPending || updateMutation.isPending ? 'Saving...' : 'Save'}
                 </button>
