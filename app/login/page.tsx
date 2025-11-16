@@ -26,6 +26,10 @@ export default function LoginPage() {
       const response = await authAPI.login(formData.username, formData.password);
       const { access, refresh } = response.data;
 
+      // Set tokens in localStorage first so the axios interceptor can use them
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+
       const userResponse = await authAPI.getCurrentUser();
       const user = userResponse.data;
 
@@ -41,8 +45,8 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       const response = await authAPI.googleLogin();
-      const { authorization_url } = response.data;
-      window.location.href = authorization_url;
+      const { auth_url } = response.data;
+      window.location.href = auth_url;
     } catch (err) {
       setError('Failed to initiate Google login');
     }
