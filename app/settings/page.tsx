@@ -25,9 +25,15 @@ export default function SettingsPage() {
   const { data: notificationPrefs, isLoading: prefsLoading } = useQuery({
     queryKey: ['notification-preferences'],
     queryFn: async () => {
-      const response = await userAPI.getNotificationPreferences();
-      return response.data;
+      try {
+        const response = await userAPI.getNotificationPreferences();
+        return response.data;
+      } catch (error) {
+        // Silently fail if backend doesn't have the table yet
+        return null;
+      }
     },
+    retry: false, // Don't retry failed requests
   });
 
   const [notificationData, setNotificationData] = useState({
@@ -37,17 +43,25 @@ export default function SettingsPage() {
     notify_on_warning: false,
   });
 
-  // Update notificationData when prefs are loaded
+  // Update notificationData when prefs are loaded or user changes
   useEffect(() => {
     if (notificationPrefs) {
       setNotificationData({
-        email: notificationPrefs.email || '',
+        email: notificationPrefs.email || user?.email || '',
         enabled: notificationPrefs.enabled ?? true,
         notify_on_error: notificationPrefs.notify_on_error ?? true,
         notify_on_warning: notificationPrefs.notify_on_warning ?? false,
       });
+    } else if (user?.email) {
+      // If no prefs exist yet, use user's email
+      setNotificationData({
+        email: user.email,
+        enabled: true,
+        notify_on_error: true,
+        notify_on_warning: false,
+      });
     }
-  }, [notificationPrefs]);
+  }, [notificationPrefs, user?.email]);
 
   const updateProfileMutation = useMutation({
     mutationFn: authAPI.updateProfile,
@@ -105,14 +119,20 @@ export default function SettingsPage() {
     e.preventDefault();
     setErrorMessage('');
 
+    // Only allow password updates (username and email are read-only)
+    if (!profileData.newPassword) {
+      setErrorMessage('Please enter a new password to update');
+      return;
+    }
+
     // Validate password matching
-    if (profileData.newPassword && profileData.newPassword !== profileData.confirmPassword) {
+    if (profileData.newPassword !== profileData.confirmPassword) {
       setErrorMessage('Passwords do not match');
       return;
     }
 
-    // Validate current password is provided when changing password
-    if (profileData.newPassword && !profileData.currentPassword) {
+    // Validate current password is provided
+    if (!profileData.currentPassword) {
       setErrorMessage('Current password is required to set a new password');
       return;
     }
@@ -120,23 +140,22 @@ export default function SettingsPage() {
     const updateData: any = {
       username: profileData.username,
       email: profileData.email,
+      current_password: profileData.currentPassword,
+      new_password: profileData.newPassword,
     };
-
-    // Add password fields if changing password
-    if (profileData.newPassword && profileData.currentPassword) {
-      updateData.current_password = profileData.currentPassword;
-      updateData.new_password = profileData.newPassword;
-    }
 
     updateProfileMutation.mutate(updateData);
   };
 
   const handleNotificationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!notificationPrefs?.id) {
-      setErrorMessage('Unable to update preferences. Please refresh the page.');
+      setErrorMessage('Unable to load notification preferences. Please refresh the page.');
+      setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
+
     updateNotificationsMutation.mutate({ id: notificationPrefs.id, data: notificationData });
   };
 
@@ -172,8 +191,9 @@ export default function SettingsPage() {
               <input
                 type="text"
                 value={profileData.username}
-                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                readOnly
+                disabled
+                className="w-full px-3 py-2 bg-[#1a1a1a]/50 border border-gray-700 rounded-md text-[#a5a5a5] cursor-not-allowed"
               />
             </div>
 
@@ -184,8 +204,9 @@ export default function SettingsPage() {
               <input
                 type="email"
                 value={profileData.email}
-                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                readOnly
+                disabled
+                className="w-full px-3 py-2 bg-[#1a1a1a]/50 border border-gray-700 rounded-md text-[#a5a5a5] cursor-not-allowed"
               />
             </div>
 
@@ -259,6 +280,7 @@ export default function SettingsPage() {
                   value={notificationData.email}
                   onChange={(e) => setNotificationData({ ...notificationData, email: e.target.value })}
                   className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700 rounded-md text-[#e5e5e5] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
+                  placeholder="Email for notifications"
                 />
               </div>
 
